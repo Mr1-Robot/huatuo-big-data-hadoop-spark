@@ -10,4 +10,5 @@ spark-submit spark/healthcare_analytics.py \
   --master "${SPARK_MASTER:-local[*]}" \
   --case-study "$1" \
   --input "$2" \
-  --output "$3"
+  --output "$3" \
+  --rules "${ANALYTICS_RULES:-config/analytics_rules.json}"

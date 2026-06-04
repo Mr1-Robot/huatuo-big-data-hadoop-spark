@@ -9,6 +9,7 @@ fi
 case_study="$1"
 input="$2"
 output="$3"
+rules="${ANALYTICS_RULES:-config/analytics_rules.json}"
 streaming_jar="${HADOOP_STREAMING_JAR:-$(find "${HADOOP_HOME:-/usr/local/opt/hadoop}/share/hadoop/tools/lib" -name 'hadoop-streaming-*.jar' | head -1)}"
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 stage_dir="${TMPDIR:-/tmp}/healthcare-hadoop-streaming"
@@ -22,7 +23,7 @@ mkdir -p "$stage_dir"
 cp "$project_root/hadoop/mapper.py" "$stage_dir/mapper.py"
 cp "$project_root/hadoop/reducer.py" "$stage_dir/reducer.py"
 cp "$project_root/preprocessing/common.py" "$stage_dir/common.py"
-cp "$project_root/config/analytics_rules.json" "$stage_dir/analytics_rules.json"
+cp "$project_root/$rules" "$stage_dir/analytics_rules.json"
 cd "$stage_dir"
 
 hdfs dfs -rm -r -f "$output" >/dev/null 2>&1 || true

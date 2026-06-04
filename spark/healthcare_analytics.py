@@ -28,8 +28,22 @@ def resolve_output(path: str) -> str:
     return path
 
 
-def case_study_1(df):
-    return (
+def case_study_1(df, rules):
+    diseases = rules.get("diseases", [])
+    disease_departments = rules.get("disease_departments", {})
+
+    def infer_departments(question):
+        folded = (question or "").casefold()
+        return sorted(
+            {
+                disease_departments[disease]
+                for disease in diseases
+                if disease.casefold() in folded and disease in disease_departments
+            }
+        )
+
+    infer_udf = F.udf(infer_departments, T.ArrayType(T.StringType()))
+    observed = (
         df.where(F.coalesce("department", "inferred_department").isNotNull())
         .select(
             F.coalesce("department", "inferred_department").alias("department"),
@@ -37,6 +51,15 @@ def case_study_1(df):
             .otherwise("inferred")
             .alias("origin"),
         )
+    )
+    inferred = (
+        df.where(F.coalesce("department", "inferred_department").isNull())
+        .withColumn("departments", infer_udf("question"))
+        .select(F.explode("departments").alias("department"))
+        .withColumn("origin", F.lit("inferred"))
+    )
+    return (
+        observed.unionByName(inferred)
         .groupBy("department", "origin")
         .count()
         .orderBy(F.desc("count"), "department")
@@ -52,9 +75,35 @@ def case_study_2(df, rules):
         ],
         T.ArrayType(T.StringType()),
     )
+    disease_udf = F.udf(
+        lambda q, a, t, observed: sorted(
+            {
+                *(
+                    [observed]
+                    if observed
+                    else []
+                ),
+                *[
+                    disease
+                    for disease in rules.get("diseases", [])
+                    if disease.casefold()
+                    in f"{q or ''} {a if t == 'text' else ''}".casefold()
+                ],
+            }
+        ),
+        T.ArrayType(T.StringType()),
+    )
     diseases = (
-        df.select(F.coalesce("related_disease", "inferred_disease").alias("term"))
-        .where(F.col("term").isNotNull())
+        df.withColumn(
+            "matched_diseases",
+            disease_udf(
+                "question",
+                "answer",
+                "answer_type",
+                F.coalesce("related_disease", "inferred_disease"),
+            ),
+        )
+        .select(F.explode("matched_diseases").alias("term"))
         .withColumn("term_type", F.lit("disease"))
     )
     symptoms = (
@@ -129,7 +178,7 @@ def main() -> int:
     rules = load_rules(args.rules)
     df = spark.read.json(resolve_input(args.input))
     jobs = {
-        "1": lambda: case_study_1(df),
+        "1": lambda: case_study_1(df, rules),
         "2": lambda: case_study_2(df, rules),
         "3": lambda: case_study_3(df),
         "4": lambda: case_study_4(df, rules),

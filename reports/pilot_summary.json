@@ -1,0 +1,81 @@
+{
+  "answer_types": {
+    "text": 300000,
+    "url": 100000
+  },
+  "duplicate_percentage": 0.1772,
+  "duplicates": 709,
+  "metadata_origins": {
+    "observed": 100000,
+    "unavailable": 300000
+  },
+  "records": 400000,
+  "source_splits": {
+    "consultation:test": 1000,
+    "consultation:train": 98000,
+    "consultation:validation": 1000,
+    "encyclopedia:test": 1000,
+    "encyclopedia:train": 98000,
+    "encyclopedia:validation": 1000,
+    "knowledge_graph:test": 1000,
+    "knowledge_graph:train": 98000,
+    "knowledge_graph:validation": 1000,
+    "lite:full": 100000
+  },
+  "sources": {
+    "consultation": 100000,
+    "encyclopedia": 100000,
+    "knowledge_graph": 100000,
+    "lite": 100000
+  },
+  "timings": [
+    {
+      "case_study": "1",
+      "elapsed_seconds": "2.349",
+      "framework": "hadoop_local",
+      "output_records": "16"
+    },
+    {
+      "case_study": "2",
+      "elapsed_seconds": "3.952",
+      "framework": "hadoop_local",
+      "output_records": "2301"
+    },
+    {
+      "case_study": "3",
+      "elapsed_seconds": "5.707",
+      "framework": "hadoop_local",
+      "output_records": "4"
+    },
+    {
+      "case_study": "4",
+      "elapsed_seconds": "4.814",
+      "framework": "hadoop_local",
+      "output_records": "7"
+    },
+    {
+      "case_study": "1",
+      "elapsed_seconds": "12.78",
+      "framework": "spark_local",
+      "output_records": "16"
+    },
+    {
+      "case_study": "2",
+      "elapsed_seconds": "14.355",
+      "framework": "spark_local",
+      "output_records": "2301"
+    },
+    {
+      "case_study": "3",
+      "elapsed_seconds": "8.908",
+      "framework": "spark_local",
+      "output_records": "4"
+    },
+    {
+      "case_study": "4",
+      "elapsed_seconds": "10.365",
+      "framework": "spark_local",
+      "output_records": "7"
+    }
+  ]
+}

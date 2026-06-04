@@ -1,0 +1,69 @@
+{
+  "files": [
+    {
+      "bytes": 137644,
+      "path": "data/source/consultation/test_datasets.jsonl",
+      "records": 1000,
+      "sha256": "71697861b24adb4f40865dc392001677c6532831c427d0e58a99792e083d83bf"
+    },
+    {
+      "bytes": 4536646679,
+      "path": "data/source/consultation/train_datasets.jsonl",
+      "records": 32706346,
+      "sha256": "c199e03129d1007f1f8692ddc4fec990f57e6cd7cd3e64e2ac712d97669f4e1b"
+    },
+    {
+      "bytes": 139455,
+      "path": "data/source/consultation/validation_datasets.jsonl",
+      "records": 1000,
+      "sha256": "e663f16800a19993fca8f1b3eb3095133ceae9cddd89a0006ef0f67c3b13f0a9"
+    },
+    {
+      "bytes": 1713540,
+      "path": "data/source/encyclopedia/test_datasets.jsonl",
+      "records": 1000,
+      "sha256": "39b9f17f71fd0ecd5e3026538210bfc3ffb3dc158eee968fa18096bd83e8c6f7"
+    },
+    {
+      "bytes": 604103775,
+      "path": "data/source/encyclopedia/train_datasets.jsonl",
+      "records": 362420,
+      "sha256": "d89c034a924b63c66f94e3a920b9872ed1a609d66d8ad79d8f747374521e9285"
+    },
+    {
+      "bytes": 1688211,
+      "path": "data/source/encyclopedia/validation_datasets.jsonl",
+      "records": 1000,
+      "sha256": "f5ff7a50cf3958a7e6368d06b50e8769cf9c8a86d9713739580ef069f02fb500"
+    },
+    {
+      "bytes": 174081,
+      "path": "data/source/knowledge_graph/test_datasets.jsonl",
+      "records": 1000,
+      "sha256": "56d4dc9f0fdf5dd43ee652ea6bd1567d698cf2a9d7b288f00e203a18e0bda82f"
+    },
+    {
+      "bytes": 148347165,
+      "path": "data/source/knowledge_graph/train_datasets.jsonl",
+      "records": 796444,
+      "sha256": "7716b46897e2dbef177af91670b2afd1d4989582bc237465a7fc574cc8269c1f"
+    },
+    {
+      "bytes": 321211,
+      "path": "data/source/knowledge_graph/validation_datasets.jsonl",
+      "records": 1000,
+      "sha256": "fd5920e32f7343a31e2501b49b3e4061f703b6fb537e54881905a0a7b5bf8c39"
+    },
+    {
+      "bytes": 138220325,
+      "path": "data/source/lite/format_data.jsonl",
+      "records": 177703,
+      "sha256": "84b849f07ab3b9517443f5efeb6c7230dcadf1f71ccaf41f3bf889e53618d4e8"
+    }
+  ],
+  "totals": {
+    "bytes": 5431492086,
+    "files": 10,
+    "records": 34048913
+  }
+}

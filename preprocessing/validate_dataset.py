@@ -11,6 +11,7 @@ from pathlib import Path
 REQUIRED = {
     "record_id",
     "source",
+    "source_split",
     "question",
     "answer",
     "answer_type",
@@ -75,4 +76,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

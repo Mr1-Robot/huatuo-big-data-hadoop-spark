@@ -6,6 +6,4 @@ hdfs_dir="${2:-/healthcare/input}"
 
 hdfs dfs -mkdir -p "$hdfs_dir"
 hdfs dfs -put -f "$local_input" "$hdfs_dir/"
-hdfs dfs -mkdir -p "$hdfs_dir/benchmarks"
-hdfs dfs -put -f "$(dirname "$local_input")"/benchmarks/*.jsonl "$hdfs_dir/benchmarks/"
 hdfs dfs -ls -h "$hdfs_dir"

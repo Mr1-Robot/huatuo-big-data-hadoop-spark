@@ -28,12 +28,29 @@ def case_study_1(record: dict) -> None:
         emit(["department", department, origin], 1)
 
 
+def case_study_1_with_rules(record: dict, rules: dict) -> None:
+    if record.get("department") or record.get("inferred_department"):
+        case_study_1(record)
+        return
+    text = record.get("question", "")
+    matched_diseases = match_terms(text, rules.get("diseases", []))
+    departments = {
+        rules.get("disease_departments", {}).get(disease)
+        for disease in matched_diseases
+    }
+    for department in sorted(value for value in departments if value):
+        emit(["department", department, "inferred"], 1)
+
+
 def case_study_2(record: dict, rules: dict) -> None:
     text = record.get("question", "")
     if record.get("answer_type") == "text":
         text += " " + record.get("answer", "")
-    disease = record.get("related_disease") or record.get("inferred_disease")
-    if disease:
+    observed_disease = record.get("related_disease") or record.get("inferred_disease")
+    diseases = set(match_terms(text, rules.get("diseases", [])))
+    if observed_disease:
+        diseases.add(observed_disease)
+    for disease in sorted(diseases):
         emit(["term", "disease", disease], 1)
     for symptom in match_terms(text, rules.get("symptoms", [])):
         emit(["term", "symptom", symptom], 1)
@@ -83,7 +100,7 @@ def main() -> int:
     rules = load_json(args.rules)
 
     functions = {
-        "1": lambda record: case_study_1(record),
+        "1": lambda record: case_study_1_with_rules(record, rules),
         "2": lambda record: case_study_2(record, rules),
         "3": lambda record: case_study_3(record),
         "4": lambda record: case_study_4(record, rules),
@@ -100,4 +117,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

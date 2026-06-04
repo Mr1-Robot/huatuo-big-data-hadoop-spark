@@ -1,88 +1,144 @@
-# Huatuo-26M Healthcare Big Data Processing
+# Huatuo Big Data Processing
 
-This project standardizes heterogeneous Huatuo medical QA datasets and runs four
-equivalent analytics jobs with Hadoop Streaming and PySpark.
+This project processes Huatuo medical question-answer datasets with the same four
+analytics case studies in Hadoop Streaming and Apache Spark.
 
-## Environment
+## What We Are Doing
 
-Required commands: Python 3, Java 17, Hadoop, and Spark. The optional full-dataset
-downloader additionally requires the Hugging Face `datasets` package.
-
-```bash
-bash scripts/check_environment.sh
+```text
+Four different Huatuo source datasets
+                |
+                v
+Standardize every source into one JSONL schema
+                |
+                v
+Union the standardized records into one dataset
+                |
+                v
+Run the same analytics with Hadoop and Spark
 ```
 
-On this machine Hadoop is configured with `hdfs://localhost:9000`, but HDFS jobs
-require the NameNode and DataNode daemons to be running first.
+The datasets are **unioned**, not joined, because they do not share a reliable
+consultation identifier.
 
-## Case Studies
+## Project Structure
 
-1. Medical department demand using observed and inferred department labels.
-2. Disease and symptom trend mining.
-3. Medical QA quality and completeness analysis.
-4. Medical question-type distribution and Hadoop-versus-Spark performance.
+```text
+config/          Shared analytics and preprocessing rules
+data/samples/    Four tiny example source datasets
+docs/            Assessment requirements, proposal, and selected case studies
+hadoop/          Python Hadoop Streaming mapper and reducer
+preprocessing/   Download, standardize, union, and validate data
+scripts/         Commands for preparing and running the project
+spark/           Equivalent PySpark analytics application
+```
 
-## Canonical Data Pipeline
+## Understand the Pipeline Using Samples
 
-The source datasets are standardized and unioned, not joined. The canonical JSONL
-schema preserves observed metadata, marks inferred metadata, derives text lengths
-and hashes, and identifies duplicate questions. Global duplicate detection uses a
-disk-backed SQLite index so preprocessing does not retain millions of hashes in RAM.
-
-Run the included sample:
+Prepare one unified sample dataset:
 
 ```bash
 bash scripts/prepare_data.sh data/samples data/standardized
-python3 tests/run_tests.py
 ```
 
-Download full sources after installing `datasets`:
+View it:
 
 ```bash
-python3 preprocessing/download_sources.py --output-dir data/raw
-bash scripts/prepare_data.sh data/raw data/standardized
+head -n 3 data/standardized/huatuo_unified.jsonl | python3 -m json.tool --json-lines
 ```
 
-Use `--limit 10000` with the downloader for a larger trial run before downloading
-all sources.
+## Run the Real-Data Pilot
 
-## Hadoop
-
-Local mapper/reducer verification:
+Create source-integrity evidence and run the 400,000-record pilot:
 
 ```bash
-bash scripts/run_hadoop_local.sh 1 data/standardized/huatuo_unified.jsonl results/cs1.jsonl
+bash scripts/create_source_manifest.sh
+bash scripts/run_pilot.sh
 ```
 
-Real Hadoop Streaming verification in Hadoop local-framework mode:
+Pilot evidence is written to `reports/` and `results/pilot/`.
+
+After pilot validation, prepare the complete source dataset with:
 
 ```bash
-bash scripts/run_hadoop_framework_local.sh 1 data/standardized/huatuo_unified.jsonl cs1-output
+bash scripts/prepare_full_data.sh
 ```
 
-Upload and run on HDFS:
+## Run One Case Study
+
+Hadoop mapper/reducer locally:
+
+```bash
+bash scripts/run_hadoop_local.sh \
+  1 data/standardized/huatuo_unified.jsonl results/hadoop-cs1.jsonl
+
+cat results/hadoop-cs1.jsonl
+```
+
+Spark locally:
+
+```bash
+bash scripts/run_spark.sh \
+  1 data/standardized/huatuo_unified.jsonl results/spark-cs1
+
+cat results/spark-cs1/part-*.json
+```
+
+Replace `1` with `2`, `3`, or `4` to run another case study.
+
+## Real Data
+
+Create an isolated downloader environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install datasets
+```
+
+Download the original published Hugging Face repository files:
+
+```bash
+.venv/bin/python preprocessing/download_source_snapshots.py \
+  --output-dir data/source
+```
+
+These are the original source files, normally Parquet. Inspect them before
+transformation:
+
+```bash
+bash scripts/inspect_source_data.sh summary
+bash scripts/inspect_source_data.sh samples
+```
+
+The current standardization pipeline expects JSONL. Source Parquet conversion will
+be added after the original files and schemas have been inspected.
+
+For a small streaming JSONL trial instead:
+
+```bash
+.venv/bin/python preprocessing/download_sources.py \
+  --output-dir data/raw-trial --limit 10000
+```
+
+Then standardize the trial:
+
+```bash
+bash scripts/prepare_data.sh data/raw-trial data/standardized
+```
+
+## HDFS
+
+After starting HDFS:
 
 ```bash
 bash scripts/upload_to_hdfs.sh
-bash scripts/run_hadoop_streaming.sh 1 /healthcare/input/huatuo_unified.jsonl /healthcare/output/cs1
+bash scripts/run_hadoop_streaming.sh \
+  1 /healthcare/input/huatuo_unified.jsonl /healthcare/output/cs1
+hdfs dfs -cat /healthcare/output/cs1/part-*
 ```
 
-## Spark
+Check installed tools and HDFS status:
 
 ```bash
-bash scripts/run_spark.sh 1 data/standardized/huatuo_unified.jsonl results/spark-cs1
-```
-
-Relative existing inputs and relative outputs are treated as local files. Use an
-explicit HDFS URI such as `hdfs://localhost:9000/healthcare/input/huatuo_unified.jsonl`
-when running Spark against HDFS.
-
-Use identical input and rules for Hadoop and Spark. Record preprocessing time
-separately from analytics execution time.
-
-Run the full 25/50/75/100 percent benchmark matrix after uploading the generated
-benchmark partitions:
-
-```bash
-bash scripts/run_benchmarks.sh /healthcare/input/benchmarks
+bash scripts/check_environment.sh
 ```

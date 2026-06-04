@@ -79,12 +79,14 @@ def canonicalize(
     source: str,
     row_number: int,
     rules: dict[str, Any],
+    source_split_override: str | None = None,
 ) -> dict[str, Any]:
     question = normalize_text(first_present(raw, ALIASES["question"]))
     answer = normalize_text(first_present(raw, ALIASES["answer"]))
     observed_department = normalize_text(first_present(raw, ALIASES["department"])) or None
     observed_disease = normalize_text(first_present(raw, ALIASES["related_disease"])) or None
     raw_id = normalize_text(first_present(raw, ALIASES["id"]))
+    source_split = source_split_override or normalize_text(raw.get("source_split")) or "unknown"
     question_hash = stable_hash(question.casefold()) if question else ""
     inferred_department, inferred_disease = infer_metadata(question, answer, rules)
 
@@ -95,8 +97,9 @@ def canonicalize(
         quality_score = None
 
     return {
-        "record_id": raw_id or f"{source}-{row_number}-{question_hash[:12]}",
+        "record_id": raw_id or f"{source}-{source_split}-{row_number}-{question_hash[:12]}",
         "source": source,
+        "source_split": source_split,
         "question": question,
         "answer": answer,
         "answer_type": classify_answer(answer),
@@ -120,6 +123,7 @@ def main() -> int:
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--source", required=True)
+    parser.add_argument("--source-split")
     parser.add_argument("--rules", type=Path, default=Path("config/enrichment_rules.json"))
     parser.add_argument("--keep-empty-questions", action="store_true")
     parser.add_argument("--skip-duplicate-detection", action="store_true")
@@ -132,7 +136,9 @@ def main() -> int:
 
     with args.output.open("w", encoding="utf-8") as output:
         for row_number, raw in enumerate(read_records(args.input), 1):
-            record = canonicalize(raw, args.source, row_number, rules)
+            record = canonicalize(
+                raw, args.source, row_number, rules, args.source_split
+            )
             if not record["question"] and not args.keep_empty_questions:
                 skipped += 1
                 continue

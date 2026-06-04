@@ -1,0 +1,25 @@
+{
+  "case_studies": {
+    "1": {
+      "hadoop_output_groups": 16,
+      "matches": true,
+      "spark_output_groups": 16
+    },
+    "2": {
+      "hadoop_output_groups": 2301,
+      "matches": true,
+      "spark_output_groups": 2301
+    },
+    "3": {
+      "hadoop_output_groups": 4,
+      "matches": true,
+      "spark_output_groups": 4
+    },
+    "4": {
+      "hadoop_output_groups": 7,
+      "matches": true,
+      "spark_output_groups": 7
+    }
+  },
+  "valid": true
+}
