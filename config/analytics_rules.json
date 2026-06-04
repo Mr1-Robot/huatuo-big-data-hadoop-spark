@@ -1,0 +1,22 @@
+{
+  "symptoms": [
+    "cough",
+    "fever",
+    "headache",
+    "pain",
+    "rash",
+    "\u53d1\u70e7",
+    "\u54b3\u55fd",
+    "\u5934\u75db",
+    "\u75bc\u75db",
+    "\u76ae\u75b9"
+  ],
+  "question_types": {
+    "cause": ["cause", "why", "\u539f\u56e0", "\u4e3a\u4ec0\u4e48"],
+    "diagnosis": ["diagnose", "test", "\u8bca\u65ad", "\u68c0\u67e5"],
+    "medication": ["medicine", "drug", "dose", "\u836f", "\u5242\u91cf"],
+    "prevention": ["prevent", "avoid", "\u9884\u9632", "\u907f\u514d"],
+    "symptom": ["symptom", "sign", "\u75c7\u72b6", "\u8868\u73b0"],
+    "treatment": ["treat", "therapy", "cure", "\u6cbb\u7597", "\u600e\u4e48\u529e"]
+  }
+}

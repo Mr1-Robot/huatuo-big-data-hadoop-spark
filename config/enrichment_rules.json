@@ -1,0 +1,15 @@
+{
+  "departments": {
+    "Cardiology": ["heart", "cardiac", "\u5fc3\u810f", "\u5fc3\u8840\u7ba1"],
+    "Dermatology": ["skin", "rash", "\u76ae\u80a4", "\u76ae\u75b9"],
+    "Neurology": ["brain", "migraine", "\u795e\u7ecf", "\u504f\u5934\u75db"],
+    "Pediatrics": ["child", "baby", "pediatric", "\u513f\u7ae5", "\u5a74\u513f"],
+    "Respiratory Medicine": ["lung", "cough", "asthma", "\u80ba", "\u54b3\u55fd", "\u54ee\u5598"]
+  },
+  "diseases": {
+    "Asthma": ["asthma", "\u54ee\u5598"],
+    "Diabetes": ["diabetes", "\u7cd6\u5c3f\u75c5"],
+    "Hypertension": ["hypertension", "high blood pressure", "\u9ad8\u8840\u538b"],
+    "Migraine": ["migraine", "\u504f\u5934\u75db"]
+  }
+}

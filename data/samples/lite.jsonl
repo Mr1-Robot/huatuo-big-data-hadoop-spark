@@ -1,0 +1,2 @@
+{"id": "lite-1", "question": "Which medicine treats asthma?", "answer": "Treatment depends on severity.", "score": 4.5, "label": "Respiratory Medicine", "related_diseases": "Asthma"}
+{"id": "lite-2", "question": "What causes a skin rash?", "answer": "A rash may have allergic or infectious causes.", "score": 3.5, "label": "Dermatology", "related_diseases": "Dermatitis"}
