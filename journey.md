@@ -295,12 +295,12 @@ the working directory size is not the same as the final dataset size.
 ```text
 Raw source data:             about 5.4 GB
 Final canonical data:        20,168,846,076 bytes, about 19 GB
-Working directory:           about 41 GB before cleanup
+Working directory:           about 41 GB before cleanup, 19 GB after cleanup
 ```
 
-After inspection and validation, the intermediate files in
-`data/standardized-full/sources/` can be removed to recover disk space. The
-important full-data artifact is:
+After inspection, validation, and HDFS upload, the intermediate files in
+`data/standardized-full/sources/` and the temporary dedupe SQLite database were
+removed to recover disk space. The important local full-data artifact is:
 
 ```text
 data/standardized-full/huatuo_unified.jsonl
@@ -573,15 +573,46 @@ Completed:
 - Validated the complete canonical dataset.
 - Inspected and summarized the complete canonical dataset.
 - Added full-canonical-data inspection and sample-generation scripts.
+- Uploaded the complete canonical dataset to HDFS.
+- Removed temporary full-preprocessing intermediates after HDFS staging.
 
 Not yet completed:
 
-- Upload the complete standardized dataset to HDFS.
 - Run all four full-dataset Hadoop jobs.
 - Run all four full-dataset Spark jobs.
 - Produce final result tables, diagrams, and report discussion.
 
-## 18. Benchmark Design
+## 18. Full Dataset HDFS Staging
+
+After local inspection passed, the complete canonical dataset was uploaded to
+HDFS:
+
+```bash
+bash scripts/upload_to_hdfs.sh \
+  data/standardized-full/huatuo_unified.jsonl \
+  /healthcare/full/input
+```
+
+The HDFS input for full-dataset experiments is:
+
+```text
+/healthcare/full/input/huatuo_unified.jsonl
+```
+
+HDFS verification:
+
+```text
+-rw-r--r--   1 muammar.jsx supergroup  18.8 G  2026-06-06 20:54  /healthcare/full/input/huatuo_unified.jsonl
+```
+
+The pilot and full datasets are stored separately in HDFS:
+
+```text
+/healthcare/pilot/input/huatuo_unified.jsonl
+/healthcare/full/input/huatuo_unified.jsonl
+```
+
+## 19. Benchmark Design
 
 The benchmark measures each analytical question separately. It submits one job
 per case study for Hadoop and one job per case study for Spark:
@@ -629,7 +660,7 @@ frameworks read the same HDFS input file and write their outputs back to HDFS.
 The output-group counts match across frameworks, which confirms that the jobs
 produced equivalent aggregate result sizes.
 
-## 19. Next Step
+## 20. Next Step
 
 The complete canonical dataset has been created and inspected from all original
 source files:
@@ -641,8 +672,9 @@ knowledge_graph/{train,validation,test}_datasets.jsonl
 lite/format_data.jsonl
 ```
 
-The next implementation step is to upload the complete canonical dataset to HDFS
-and then run the formal full-dataset Hadoop and Spark experiments.
+The complete canonical dataset has been uploaded to HDFS. The next
+implementation step is to run the formal full-dataset Hadoop and Spark
+experiments.
 
 The full-source pipeline preserves every source split:
 
@@ -662,7 +694,7 @@ The full canonical file has been inspected with:
 bash scripts/summarize_full_data.sh
 ```
 
-## 20. Suggested Presentation Storyline
+## 21. Suggested Presentation Storyline
 
 1. Explain the WOC7017 assessment goal and healthcare domain.
 2. Introduce the four Huatuo sources and prove the combined 5.432 GB size.
