@@ -24,71 +24,60 @@ consultation identifier.
 ## Project Structure
 
 ```text
-config/          Shared analytics and preprocessing rules
-data/samples/    Four tiny example source datasets
-docs/            Assessment requirements, proposal, and selected case studies
-hadoop/          Python Hadoop Streaming mapper and reducer
-preprocessing/   Download, standardize, union, and validate data
-scripts/         Commands for preparing and running the project
+config/          Analytics and preprocessing rules
+data/source/     Original Huatuo source files
+data/pilot/      Deterministic 400,000-record pilot
+data/processed-pilot/
+                 Canonical pilot JSONL used for benchmarking
+docs/            Local assessment PDFs, ignored by Git
+journey.md       Presentation-ready project journey
+hadoop/          Hadoop Streaming mapper and reducer
+preprocessing/   Manifest, pilot, standardization, union, validation
+reports/         Source and pilot evidence
+results/         Final benchmark timing CSV
+scripts/         Reproducible terminal commands
 spark/           Equivalent PySpark analytics application
 ```
 
-## Understand the Pipeline Using Samples
+## Current Benchmark
 
-Prepare one unified sample dataset:
-
-```bash
-bash scripts/prepare_data.sh data/samples data/standardized
-```
-
-View it:
+The benchmark used in the report is the per-case-study HDFS/YARN run:
 
 ```bash
-head -n 3 data/standardized/huatuo_unified.jsonl | python3 -m json.tool --json-lines
+bash scripts/run_case_benchmark.sh cluster
 ```
 
-## Run the Real-Data Pilot
+Final timing evidence:
 
-Create source-integrity evidence and run the 400,000-record pilot:
+```text
+results/case-benchmark/timings-cluster-20260606-153149.csv
+```
+
+## Recreate the Pilot Input
+
+Create the source manifest:
 
 ```bash
 bash scripts/create_source_manifest.sh
-bash scripts/run_pilot.sh
 ```
 
-Pilot evidence is written to `reports/` and `results/pilot/`.
-
-After pilot validation, prepare the complete source dataset with:
+Create and standardize the deterministic pilot:
 
 ```bash
-bash scripts/prepare_full_data.sh
+bash scripts/create_pilot.sh
+bash scripts/prepare_data.sh data/pilot data/processed-pilot
 ```
 
-## Run One Case Study
+The benchmark input is:
 
-Hadoop mapper/reducer locally:
-
-```bash
-bash scripts/run_hadoop_local.sh \
-  1 data/standardized/huatuo_unified.jsonl results/hadoop-cs1.jsonl
-
-cat results/hadoop-cs1.jsonl
+```text
+data/processed-pilot/huatuo_unified.jsonl
 ```
-
-Spark locally:
-
-```bash
-bash scripts/run_spark.sh \
-  1 data/standardized/huatuo_unified.jsonl results/spark-cs1
-
-cat results/spark-cs1/part-*.json
-```
-
-Replace `1` with `2`, `3`, or `4` to run another case study.
 
 ## Real Data
 
-Create an isolated downloader environment:
+Create a temporary downloader environment only if the source files need to be
+downloaded again:
 
 ```bash
 python3 -m venv .venv
@@ -102,42 +91,33 @@ Download the original published Hugging Face repository files:
   --output-dir data/source
 ```
 
-These are the original source files, normally Parquet. Inspect them before
-transformation:
+Inspect the downloaded sources:
 
 ```bash
 bash scripts/inspect_source_data.sh summary
 bash scripts/inspect_source_data.sh samples
 ```
 
-The current standardization pipeline expects JSONL. Source Parquet conversion will
-be added after the original files and schemas have been inspected.
-
-For a small streaming JSONL trial instead:
-
-```bash
-.venv/bin/python preprocessing/download_sources.py \
-  --output-dir data/raw-trial --limit 10000
-```
-
-Then standardize the trial:
-
-```bash
-bash scripts/prepare_data.sh data/raw-trial data/standardized
-```
-
 ## HDFS
 
-After starting HDFS:
+Upload the processed pilot to HDFS:
 
 ```bash
-bash scripts/upload_to_hdfs.sh
-bash scripts/run_hadoop_streaming.sh \
-  1 /healthcare/input/huatuo_unified.jsonl /healthcare/output/cs1
-hdfs dfs -cat /healthcare/output/cs1/part-*
+bash scripts/upload_to_hdfs.sh \
+  data/processed-pilot/huatuo_unified.jsonl \
+  /healthcare/pilot/input
 ```
 
-Check installed tools and HDFS status:
+Run one Hadoop Streaming case manually:
+
+```bash
+bash scripts/run_hadoop_streaming.sh \
+  1 \
+  /healthcare/pilot/input/huatuo_unified.jsonl \
+  /healthcare/pilot/output/manual-cs1
+```
+
+Check local tools and HDFS status:
 
 ```bash
 bash scripts/check_environment.sh

@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, os.getcwd())
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "preprocessing"))
 from common import load_json, match_terms  # noqa: E402
 
@@ -94,7 +97,12 @@ def case_study_4(record: dict, rules: dict) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--case-study", choices=("1", "2", "3", "4"), required=True)
+    parser.add_argument(
+        "--case-study",
+        choices=("1", "2", "3", "4", "all"),
+        required=True,
+        help="Run one case study or all case studies in a single mapper pass.",
+    )
     parser.add_argument("--rules", default=str(ROOT / "config" / "analytics_rules.json"))
     args = parser.parse_args()
     rules = load_json(args.rules)
@@ -105,11 +113,18 @@ def main() -> int:
         "3": lambda record: case_study_3(record),
         "4": lambda record: case_study_4(record, rules),
     }
+    selected_functions = (
+        list(functions.values())
+        if args.case_study == "all"
+        else [functions[args.case_study]]
+    )
     for line_number, line in enumerate(sys.stdin, 1):
         if not line.strip():
             continue
         try:
-            functions[args.case_study](json.loads(line))
+            record = json.loads(line)
+            for function in selected_functions:
+                function(record)
         except (json.JSONDecodeError, TypeError, ValueError) as exc:
             print(f"mapper skipped line {line_number}: {exc}", file=sys.stderr)
     return 0

@@ -58,12 +58,22 @@ def reduce_quality(values: list[dict[str, Any]]) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--case-study", choices=("1", "2", "3", "4"), required=True)
+    parser.add_argument(
+        "--case-study",
+        choices=("1", "2", "3", "4", "all"),
+        required=True,
+        help="Run one case study or all case studies in a single reducer pass.",
+    )
     args = parser.parse_args()
 
     for raw_key, values in grouped_input():
         key = json.loads(raw_key)
-        result = reduce_quality(values) if args.case_study == "3" else {"count": sum(values)}
+        result = (
+            reduce_quality(values)
+            if args.case_study == "3"
+            or (args.case_study == "all" and key[0] == "source_quality")
+            else {"count": sum(values)}
+        )
         print(
             json.dumps(
                 {"key": key, "metrics": result},
@@ -76,4 +86,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

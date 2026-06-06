@@ -24,13 +24,13 @@ Our selected project is:
 We downloaded the original published Hugging Face repository files without
 converting or rewriting them.
 
-| Source | Main fields | Records | Size |
-|---|---|---:|---:|
-| Consultation QA | `questions`, `answers` | 32,708,346 | 4.537 GB |
-| Encyclopedia QA | `questions`, `answers` | 364,420 | 0.608 GB |
-| Knowledge Graph QA | `questions`, `answers` | 798,444 | 0.149 GB |
-| Huatuo26M-Lite | `id`, `question`, `answer`, `score`, `label`, `related_diseases` | 177,703 | 0.138 GB |
-| **Combined** | Heterogeneous medical QA records | **34,048,913** | **5.432 GB** |
+| Source             | Main fields                                                      |        Records |         Size |
+| ------------------ | ---------------------------------------------------------------- | -------------: | -----------: |
+| Consultation QA    | `questions`, `answers`                                           |     32,708,346 |     4.537 GB |
+| Encyclopedia QA    | `questions`, `answers`                                           |        364,420 |     0.608 GB |
+| Knowledge Graph QA | `questions`, `answers`                                           |        798,444 |     0.149 GB |
+| Huatuo26M-Lite     | `id`, `question`, `answer`, `score`, `label`, `related_diseases` |        177,703 |     0.138 GB |
+| **Combined**       | Heterogeneous medical QA records                                 | **34,048,913** | **5.432 GB** |
 
 The combined original source size is:
 
@@ -223,14 +223,14 @@ Pandas, Hadoop, Spark, and normal Python can all read JSONL.
 config/          Shared rules used by Hadoop and Spark
 data/samples/    Tiny example datasets
 data/source/     Original downloaded Huatuo repository files
-docs/            Assessment brief, proposal, and selected case studies
+docs/            Local assessment PDFs, ignored by Git
 hadoop/          Hadoop Streaming mapper and reducer
 preprocessing/   Download, standardize, union, and validate scripts
 scripts/         Terminal commands for inspection and execution
 spark/           Equivalent PySpark analytics implementation
 reports/         Source-integrity and pilot-result evidence
 README.md        Short operational guide
-docs.md          This project journey
+journey.md       This project journey
 ```
 
 ## 9. Source Integrity Manifest
@@ -273,13 +273,13 @@ bash scripts/create_pilot.sh
 
 The pilot contains exactly 100,000 real records from each source:
 
-| Source | Validation | Test | Train/Full | Total |
-|---|---:|---:|---:|---:|
-| Consultation | 1,000 | 1,000 | 98,000 train | 100,000 |
-| Encyclopedia | 1,000 | 1,000 | 98,000 train | 100,000 |
-| Knowledge Graph | 1,000 | 1,000 | 98,000 train | 100,000 |
-| Lite | N/A | N/A | 100,000 full | 100,000 |
-| **Combined** | **3,000** | **3,000** | **394,000** | **400,000** |
+| Source          | Validation |      Test |   Train/Full |       Total |
+| --------------- | ---------: | --------: | -----------: | ----------: |
+| Consultation    |      1,000 |     1,000 | 98,000 train |     100,000 |
+| Encyclopedia    |      1,000 |     1,000 | 98,000 train |     100,000 |
+| Knowledge Graph |      1,000 |     1,000 | 98,000 train |     100,000 |
+| Lite            |        N/A |       N/A | 100,000 full |     100,000 |
+| **Combined**    |  **3,000** | **3,000** |  **394,000** | **400,000** |
 
 The pilot uses a deterministic prefix from each source after preserving all
 available validation and test records. This makes runs reproducible. It is used
@@ -298,39 +298,37 @@ bash scripts/prepare_data.sh data/pilot data/processed-pilot
 
 Verified results:
 
-| Metric | Result |
-|---|---:|
-| Input records | 400,000 |
-| Unified output records | 400,000 |
-| Text answers | 300,000 |
-| URL answers | 100,000 |
-| Observed metadata records | 100,000 |
+| Metric                       |  Result |
+| ---------------------------- | ------: |
+| Input records                | 400,000 |
+| Unified output records       | 400,000 |
+| Text answers                 | 300,000 |
+| URL answers                  | 100,000 |
+| Observed metadata records    | 100,000 |
 | Metadata-unavailable records | 300,000 |
-| Duplicate questions detected | 709 |
-| Duplicate percentage | 0.1772% |
-| Validation status | Valid |
+| Duplicate questions detected |     709 |
+| Duplicate percentage         | 0.1772% |
+| Validation status            |   Valid |
 
 The processed pilot occupies approximately 929 MB because the canonical format
 adds provenance, derived lengths, hashes, and metadata fields to every record.
 
 ## 12. Pilot Analytics Results
 
-All four case studies completed with both the local Hadoop mapper/reducer
-pipeline and local Spark. Both implementations produced the same output row
-counts and matching aggregate values.
+All four case studies completed successfully on the 400,000-record pilot.
+Hadoop and Spark produced the same output row counts for every case study, which
+confirms that the two implementations are analytically equivalent before the
+benchmark comparison.
 
-| Case study | Output groups | Hadoop local | Spark local |
-|---|---:|---:|---:|
-| Department demand | 16 | 2.349 s | 12.780 s |
-| Disease and symptom trends | 2,301 | 3.952 s | 14.355 s |
-| QA quality and completeness | 4 | 5.707 s | 8.908 s |
-| Question-type distribution | 7 | 4.814 s | 10.365 s |
+| Case study                  | Output groups |
+| --------------------------- | ------------: |
+| Department demand           |            16 |
+| Disease and symptom trends  |         2,301 |
+| QA quality and completeness |             4 |
+| Question-type distribution  |             7 |
 
-These are development timings, not the formal Hadoop-versus-Spark performance
-evaluation. The Hadoop local runner uses mapper, sort, and reducer processes,
-while Spark includes JVM and SparkSession startup overhead. Formal comparison
-will use HDFS, the Hadoop framework, equivalent resources, repeated runs, and
-the complete dataset.
+The Hadoop-versus-Spark timing comparison is reported in Section 15 using
+HDFS/YARN benchmark submissions.
 
 ### Pilot Analytical Observations
 
@@ -352,7 +350,7 @@ Reproducible summary evidence is stored in:
 ```text
 reports/pilot_summary.json
 reports/framework_equivalence.json
-results/pilot/timings.csv
+results/case-benchmark/timings-cluster-20260606-153149.csv
 ```
 
 ## 13. Inspecting the Original Data
@@ -383,18 +381,66 @@ Completed:
 - Validated all four case studies against the real-data pilot.
 - Confirmed matching Hadoop/Spark pilot aggregate outputs.
 - Added simple source-data inspection commands.
+- Added a per-case-study benchmark mode for Hadoop and Spark.
+- Executed the controlled per-case-study benchmark on HDFS/YARN.
 
 Not yet completed:
 
 - Standardize and union the complete 34-million-record dataset.
-- Start and configure HDFS.
-- Upload the standardized dataset to HDFS.
-- Run all four full Hadoop jobs.
-- Run all four full Spark jobs.
-- Execute controlled performance benchmarks.
+- Upload the complete standardized dataset to HDFS.
+- Run all four full-dataset Hadoop jobs.
+- Run all four full-dataset Spark jobs.
 - Produce final result tables, diagrams, and report discussion.
 
-## 15. Next Step
+## 15. Benchmark Design
+
+The benchmark measures each analytical question separately. It submits one job
+per case study for Hadoop and one job per case study for Spark:
+
+```bash
+bash scripts/run_case_benchmark.sh cluster
+```
+
+The output CSV has one row per framework per case study:
+
+```text
+framework,mode,case_study,elapsed_seconds,output_records,input,output
+```
+
+This layout is useful for the presentation because it shows which case study is
+more expensive. For example, disease and symptom trend extraction is expected
+to be heavier than department demand because it searches more medical terms and
+creates more output groups.
+
+The benchmark controls the main comparison points:
+
+- Hadoop and Spark read the same canonical JSONL input.
+- Hadoop and Spark execute equivalent analytical logic.
+- Each case study is timed separately.
+- Each output record count is logged for validation.
+- The HDFS/YARN mode is used for the formal cluster comparison.
+
+Formal HDFS/YARN benchmark on the 400,000-record pilot:
+
+| Case study                  | Output groups | Hadoop Streaming on YARN | Spark on YARN |
+| --------------------------- | ------------: | -----------------------: | ------------: |
+| Department demand           |            16 |                 18.763 s |      29.630 s |
+| Disease and symptom trends  |         2,301 |                 18.558 s |      31.256 s |
+| QA quality and completeness |             4 |                 19.602 s |      25.309 s |
+| Question-type distribution  |             7 |                 18.560 s |      23.310 s |
+
+The timing file is:
+
+```text
+results/case-benchmark/timings-cluster-20260606-153149.csv
+```
+
+This table is the benchmark used for the Hadoop-versus-Spark comparison. Both
+frameworks read the same HDFS input file and write their outputs back to HDFS.
+The output-group counts match across frameworks, which confirms that the jobs
+produced equivalent aggregate result sizes.
+
+## 16. Next Step
 
 The next implementation step is to standardize and union all original source
 files:
@@ -419,7 +465,7 @@ This command is intentionally not started until the pilot evidence has been
 reviewed, because the resulting canonical dataset will be significantly larger
 than the 5.432 GB source snapshot.
 
-## 16. Suggested Presentation Storyline
+## 17. Suggested Presentation Storyline
 
 1. Explain the WOC7017 assessment goal and healthcare domain.
 2. Introduce the four Huatuo sources and prove the combined 5.432 GB size.
@@ -429,5 +475,5 @@ than the 5.432 GB source snapshot.
 6. Explain the deterministic 400,000-record pilot methodology.
 7. Present the four MapReduce case studies.
 8. Show the pilot validation and analytical observations.
-9. Explain why local timings are preliminary.
+9. Present the per-case-study Hadoop-versus-Spark benchmark.
 10. Demonstrate the complete HDFS Hadoop-versus-Spark evaluation.

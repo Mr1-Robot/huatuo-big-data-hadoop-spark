@@ -1,0 +1,9 @@
+framework,mode,case_study,elapsed_seconds,output_records,input,output
+hadoop_streaming_yarn,cluster,1,18.763,16,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/hadoop-cs1-20260606-153149
+hadoop_streaming_yarn,cluster,2,18.558,2301,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/hadoop-cs2-20260606-153149
+hadoop_streaming_yarn,cluster,3,19.602,4,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/hadoop-cs3-20260606-153149
+hadoop_streaming_yarn,cluster,4,18.56,7,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/hadoop-cs4-20260606-153149
+spark_submit_yarn,cluster,1,29.63,16,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/spark-cs1-20260606-153615
+spark_submit_yarn,cluster,2,31.256,2301,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/spark-cs2-20260606-153615
+spark_submit_yarn,cluster,3,25.309,4,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/spark-cs3-20260606-153615
+spark_submit_yarn,cluster,4,23.31,7,/healthcare/pilot/input/huatuo_unified.jsonl,/healthcare/pilot/output/spark-cs4-20260606-153615

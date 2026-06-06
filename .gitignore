@@ -4,6 +4,7 @@ __pycache__/
 ~$*
 .venv/
 .hf-cache/
+docs/
 
 # Full Huatuo sources and generated standardized data can be several GB.
 data/raw/
@@ -13,14 +14,15 @@ data/pilot/
 data/processed-pilot/
 data/standardized/
 data/standardized-full/
-results/
 
 # Generated job outputs and local runtime state.
-results/
+results/*
+!results/case-benchmark/
+results/case-benchmark/*
+!results/case-benchmark/timings-cluster-20260606-153149.csv
 spark-warehouse/
 metastore_db/
 derby.log
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
-docs/

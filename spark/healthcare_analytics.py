@@ -164,27 +164,46 @@ def case_study_4(df, rules):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--case-study", choices=("1", "2", "3", "4"), required=True)
+    parser.add_argument(
+        "--case-study",
+        choices=("1", "2", "3", "4", "all"),
+        required=True,
+        help="Run one case study or all case studies in a single Spark application.",
+    )
     parser.add_argument("--input", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--rules", default="config/analytics_rules.json")
     parser.add_argument("--master")
+    parser.add_argument(
+        "--cache-input",
+        action="store_true",
+        help="Persist the input DataFrame when running multiple case studies.",
+    )
     args = parser.parse_args()
 
     builder = SparkSession.builder.appName(f"healthcare-case-study-{args.case_study}")
     if args.master:
         builder = builder.master(args.master)
     spark = builder.getOrCreate()
+    spark.sparkContext.setLogLevel("WARN")
     rules = load_rules(args.rules)
     df = spark.read.json(resolve_input(args.input))
+    if args.cache_input:
+        df = df.persist()
+        df.count()
     jobs = {
         "1": lambda: case_study_1(df, rules),
         "2": lambda: case_study_2(df, rules),
         "3": lambda: case_study_3(df),
         "4": lambda: case_study_4(df, rules),
     }
-    result = jobs[args.case_study]()
-    result.write.mode("overwrite").json(resolve_output(args.output))
+    if args.case_study == "all":
+        output_root = resolve_output(args.output).rstrip("/")
+        for case_study, job in jobs.items():
+            job().write.mode("overwrite").json(f"{output_root}/case_study_{case_study}")
+    else:
+        result = jobs[args.case_study]()
+        result.write.mode("overwrite").json(resolve_output(args.output))
     spark.stop()
     return 0
 

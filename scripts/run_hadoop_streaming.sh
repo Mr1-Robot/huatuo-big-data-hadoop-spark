@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -ne 3 ]]; then
-  echo "Usage: $0 CASE_STUDY HDFS_INPUT HDFS_OUTPUT" >&2
+  echo "Usage: $0 CASE_STUDY|all HDFS_INPUT HDFS_OUTPUT" >&2
   exit 2
 fi
 
