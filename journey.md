@@ -154,6 +154,26 @@ A join would imply that records from different sources describe the same
 consultation or patient. No reliable shared identifier exists to support that
 claim.
 
+The unification is therefore based on shared semantic structure rather than
+shared IDs. All selected sources contain medical question-answer records, so
+their available fields can be mapped into one canonical QA schema. The original
+source identity is preserved in the `source` and `source_split` fields.
+
+This avoids creating false relationships between records. For example, a
+consultation record and an encyclopedia record may both discuss the same disease,
+but that does not prove they describe the same patient, question, or medical
+event. A union keeps them as separate observations in one integrated analytical
+dataset.
+
+Presentation justification:
+
+> The Huatuo sources were unified by schema normalization and union. We did not
+> join records because there is no trustworthy shared key across all sources.
+> Instead, each medical QA record was converted into the same canonical schema,
+> source provenance was preserved, unavailable metadata was represented as null,
+> and duplicate questions were flagged transparently using a normalized question
+> hash.
+
 The planned integration flow is:
 
 ```text
@@ -200,6 +220,35 @@ Every source record will eventually become a record with the same structure:
 
 Observed and inferred metadata must never be mixed silently.
 
+Question text normalization means formatting cleanup only. The project does not
+translate, rewrite, medically correct, or change the meaning of questions.
+
+The normalization step:
+
+- Converts missing values to an empty string.
+- Joins list-valued questions into one string.
+- Converts dictionary-valued questions into JSON text.
+- Converts the final value to a string.
+- Replaces repeated whitespace with one space.
+- Removes leading and trailing spaces.
+
+For duplicate detection, the normalized question is casefolded and hashed with
+SHA-256. This means questions that only differ by spacing or capitalization can
+be flagged as duplicates, while the original normalized question text remains
+available for analysis.
+
+Example:
+
+```text
+"  What   causes fever?  "
+```
+
+becomes:
+
+```text
+What causes fever?
+```
+
 ## 7. Source Download Strategy
 
 Hugging Face snapshot downloads preserve the original published repository
@@ -217,7 +266,54 @@ These folders now contain the original published repository files.
 The original files are already JSONL, so no Pandas conversion is required.
 Pandas, Hadoop, Spark, and normal Python can all read JSONL.
 
-## 8. Current Project Structure
+## 8. Storage Size Explanation
+
+The original Huatuo source snapshot is **5.432 GB**, but the processed working
+directory becomes much larger during full-data preparation.
+
+This is expected because the raw files only contain the fields published by each
+source. The canonical JSONL adds project-specific metadata to every record,
+including provenance, quality, length, hash, and duplicate fields:
+
+- `source`
+- `source_split`
+- `answer_type`
+- `metadata_origin`
+- `question_length`
+- `answer_length`
+- `question_hash`
+- `duplicate_flag`
+
+JSONL is also plain text, so every field name is repeated on every row. With
+more than 34 million records, the repeated keys and added metadata increase the
+final canonical file size.
+
+During preprocessing, the project temporarily stores both standardized
+per-source intermediate files and the final unified canonical file. Therefore,
+the working directory size is not the same as the final dataset size.
+
+```text
+Raw source data:             about 5.4 GB
+Final canonical data:        20,168,846,076 bytes, about 19 GB
+Working directory:           about 41 GB before cleanup
+```
+
+After inspection and validation, the intermediate files in
+`data/standardized-full/sources/` can be removed to recover disk space. The
+important full-data artifact is:
+
+```text
+data/standardized-full/huatuo_unified.jsonl
+```
+
+Presentation explanation:
+
+> The raw source data is 5.432 GB. The processed canonical dataset is larger
+> because every row carries extra provenance, quality, length, hash, and
+> duplicate fields. The working folder is larger again because it temporarily
+> stores both intermediate standardized files and the final unified output.
+
+## 9. Current Project Structure
 
 ```text
 config/          Shared rules used by Hadoop and Spark
@@ -233,7 +329,7 @@ README.md        Short operational guide
 journey.md       This project journey
 ```
 
-## 9. Source Integrity Manifest
+## 10. Source Integrity Manifest
 
 Before transformation, every original JSONL file is counted and hashed with
 SHA-256:
@@ -262,7 +358,7 @@ non-empty JSON records** and **5,431,492,086 bytes**. Repository metadata files
 such as README and loader scripts account for the small difference from the
 complete snapshot size.
 
-## 10. Pilot Sampling Method
+## 11. Pilot Sampling Method
 
 Processing all 34 million records before validating the pipeline would make
 development slow and error-prone. A deterministic pilot was therefore created:
@@ -288,7 +384,7 @@ for engineering validation, not for making final population-level conclusions.
 Every pilot record receives a `source_split` field so its origin remains
 traceable after integration.
 
-## 11. Pilot Preprocessing Results
+## 12. Pilot Preprocessing Results
 
 The pilot was standardized and unioned with:
 
@@ -313,7 +409,7 @@ Verified results:
 The processed pilot occupies approximately 929 MB because the canonical format
 adds provenance, derived lengths, hashes, and metadata fields to every record.
 
-## 12. Pilot Analytics Results
+## 13. Pilot Analytics Results
 
 All four case studies completed successfully on the 400,000-record pilot.
 Hadoop and Spark produced the same output row counts for every case study, which
@@ -353,7 +449,7 @@ reports/framework_equivalence.json
 results/case-benchmark/timings-cluster-20260606-153149.csv
 ```
 
-## 13. Inspecting the Original Data
+## 14. Inspecting the Original Data
 
 Use the inspection script:
 
@@ -365,7 +461,97 @@ bash scripts/inspect_source_data.sh samples
 The summary command displays source sizes and counts all records with a terminal
 spinner.
 
-## 14. Current Status
+## 15. Inspecting the Full Canonical Data
+
+After the full source files are standardized and unioned, the next step is local
+inspection only. Hadoop and Spark should not be submitted until the full
+canonical data has been checked.
+
+The inspection command is:
+
+```bash
+bash scripts/summarize_full_data.sh
+```
+
+It reports local file properties:
+
+```bash
+ls -lh data/standardized-full/huatuo_unified.jsonl
+du -h data/standardized-full/huatuo_unified.jsonl
+wc -l data/standardized-full/huatuo_unified.jsonl
+```
+
+It also creates:
+
+```text
+reports/full_summary.json
+data/samples/full-canonical/
+```
+
+These files provide full-data evidence similar to the pilot evidence: total
+records, source distribution, answer-type distribution, duplicate percentage,
+missing values, length statistics, quality-score statistics, and representative
+samples by source.
+
+Full canonical inspection result:
+
+| Metric | Value |
+| ------ | ----: |
+| Final canonical records | 34,048,898 |
+| Final canonical file size | 20,168,846,076 bytes, about 19 GB |
+| Invalid JSON lines | 0 |
+| Duplicate-flagged records | 10,162,575 |
+| Duplicate percentage | 29.847% |
+| URL answers | 32,708,326 |
+| Text answers | 1,340,572 |
+| Missing questions | 0 |
+| Missing answers | 0 |
+
+Source distribution:
+
+| Source | Records |
+| ------ | ------: |
+| Consultation QA | 32,708,331 |
+| Encyclopedia QA | 364,420 |
+| Knowledge Graph QA | 798,444 |
+| Huatuo26M-Lite | 177,703 |
+
+Full-data evidence is stored in:
+
+```text
+reports/full_summary.json
+data/samples/full-canonical/
+```
+
+## 16. Full Preprocessing Runtime
+
+The full-source preprocessing command is:
+
+```bash
+bash scripts/prepare_full_data.sh data/source data/standardized-full
+```
+
+This command performs:
+
+- Schema normalization for every source split.
+- Text normalization for question and answer fields.
+- Union into one canonical JSONL file.
+- Cross-source duplicate flagging using normalized `question_hash` values.
+- Validation of the final canonical file.
+
+Observed execution time:
+
+```text
+Full preprocessing runtime: approximately 2 hours 23 minutes
+Measured window: 2026-06-06 16:17:30 to about 18:40 +08
+Union output write phase: 2 hours 20 minutes 26 seconds
+```
+
+The command was started before a timer wrapper was added, so the runtime is
+reported from observed output-file timestamps and command completion polling.
+Future formal runs should wrap the command with `/usr/bin/time`.
+
+## 17. Current Status
 
 Completed:
 
@@ -383,16 +569,19 @@ Completed:
 - Added simple source-data inspection commands.
 - Added a per-case-study benchmark mode for Hadoop and Spark.
 - Executed the controlled per-case-study benchmark on HDFS/YARN.
+- Completed full-source schema normalization, union, and duplicate flagging.
+- Validated the complete canonical dataset.
+- Inspected and summarized the complete canonical dataset.
+- Added full-canonical-data inspection and sample-generation scripts.
 
 Not yet completed:
 
-- Standardize and union the complete 34-million-record dataset.
 - Upload the complete standardized dataset to HDFS.
 - Run all four full-dataset Hadoop jobs.
 - Run all four full-dataset Spark jobs.
 - Produce final result tables, diagrams, and report discussion.
 
-## 15. Benchmark Design
+## 18. Benchmark Design
 
 The benchmark measures each analytical question separately. It submits one job
 per case study for Hadoop and one job per case study for Spark:
@@ -440,10 +629,10 @@ frameworks read the same HDFS input file and write their outputs back to HDFS.
 The output-group counts match across frameworks, which confirms that the jobs
 produced equivalent aggregate result sizes.
 
-## 16. Next Step
+## 19. Next Step
 
-The next implementation step is to standardize and union all original source
-files:
+The complete canonical dataset has been created and inspected from all original
+source files:
 
 ```text
 consultation/{train,validation,test}_datasets.jsonl
@@ -452,20 +641,28 @@ knowledge_graph/{train,validation,test}_datasets.jsonl
 lite/format_data.jsonl
 ```
 
-After full preprocessing, the canonical dataset will be uploaded to HDFS and
-used for the formal Hadoop and Spark experiments.
+The next implementation step is to upload the complete canonical dataset to HDFS
+and then run the formal full-dataset Hadoop and Spark experiments.
 
-The full-source pipeline is ready and preserves every source split:
+The full-source pipeline preserves every source split:
 
 ```bash
-bash scripts/prepare_full_data.sh
+bash scripts/prepare_full_data.sh data/source data/standardized-full
 ```
 
-This command is intentionally not started until the pilot evidence has been
-reviewed, because the resulting canonical dataset will be significantly larger
-than the 5.432 GB source snapshot.
+This command produces the complete canonical dataset at:
 
-## 17. Suggested Presentation Storyline
+```text
+data/standardized-full/huatuo_unified.jsonl
+```
+
+The full canonical file has been inspected with:
+
+```bash
+bash scripts/summarize_full_data.sh
+```
+
+## 20. Suggested Presentation Storyline
 
 1. Explain the WOC7017 assessment goal and healthcare domain.
 2. Introduce the four Huatuo sources and prove the combined 5.432 GB size.

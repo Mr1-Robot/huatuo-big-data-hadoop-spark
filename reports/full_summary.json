@@ -1,0 +1,94 @@
+{
+  "answer_lengths": {
+    "average": 7.3764,
+    "count": 34048898,
+    "max": 43809,
+    "min": 0
+  },
+  "answer_types": {
+    "text": 1340572,
+    "url": 32708326
+  },
+  "duplicate_percentage": 29.847,
+  "duplicates": 10162575,
+  "file_size_bytes": 20168846076,
+  "input": "data/standardized-full/huatuo_unified.jsonl",
+  "invalid_json_lines": 0,
+  "metadata_origins": {
+    "observed": 177703,
+    "unavailable": 33871195
+  },
+  "missing_answers": 0,
+  "missing_questions": 0,
+  "quality_scores": {
+    "average": 4.1281,
+    "count": 177703,
+    "max": 5.0,
+    "min": 4.0
+  },
+  "question_lengths": {
+    "average": 17.4845,
+    "count": 34048898,
+    "max": 428,
+    "min": 1
+  },
+  "records": 34048898,
+  "source_splits": {
+    "consultation:test": 1000,
+    "consultation:train": 32706331,
+    "consultation:validation": 1000,
+    "encyclopedia:test": 1000,
+    "encyclopedia:train": 362420,
+    "encyclopedia:validation": 1000,
+    "knowledge_graph:test": 1000,
+    "knowledge_graph:train": 796444,
+    "knowledge_graph:validation": 1000,
+    "lite:full": 177703
+  },
+  "sources": {
+    "consultation": 32708331,
+    "encyclopedia": 364420,
+    "knowledge_graph": 798444,
+    "lite": 177703
+  },
+  "top_departments": {
+    "中医科": 2493,
+    "儿科": 21202,
+    "其他": 1133,
+    "内科": 29677,
+    "口腔科": 3223,
+    "外科": 9577,
+    "妇产科": 34313,
+    "心理科学": 2989,
+    "急诊科": 21,
+    "感染与免疫科": 5028,
+    "生殖健康科": 1363,
+    "男性健康科": 8109,
+    "皮肤性病科": 24668,
+    "眼耳鼻喉科": 13791,
+    "神经科学": 10009,
+    "肿瘤科": 10107
+  },
+  "top_related_diseases": {
+    "乙肝": 1232,
+    "人流": 2686,
+    "便秘": 1214,
+    "出血": 1400,
+    "前列腺炎": 1564,
+    "发烧": 1265,
+    "咳嗽": 1799,
+    "尖锐湿疣": 1516,
+    "感冒": 2371,
+    "甲亢": 1178,
+    "疼痛": 1842,
+    "痔疮": 2134,
+    "癫痫": 2217,
+    "白癜风": 3308,
+    "糖尿病": 1348,
+    "肝癌": 1354,
+    "肺癌": 1408,
+    "脱发": 1173,
+    "过敏性鼻炎": 1295,
+    "鼻炎": 1370
+  }
+}
