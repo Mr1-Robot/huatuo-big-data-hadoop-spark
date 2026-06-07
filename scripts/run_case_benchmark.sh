@@ -3,6 +3,7 @@ set -euo pipefail
 
 mode="${1:-cluster}"
 framework_filter="${2:-all}"
+case_filter="${3:-1,2,3,4}"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 results_dir="results/case-benchmark"
 timings_file="${BENCHMARK_TIMINGS_FILE:-$results_dir/timings-${mode}-${timestamp}.csv}"
@@ -26,11 +27,32 @@ hdfs_count() {
   hdfs dfs -cat "$1" | wc -l | tr -d ' '
 }
 
+case_studies() {
+  python3 - "$case_filter" <<'PY'
+import sys
+
+values = []
+for raw in sys.argv[1].split(","):
+    value = raw.strip()
+    if value:
+        values.append(value)
+
+valid = {"1", "2", "3", "4"}
+invalid = [value for value in values if value not in valid]
+if invalid:
+    raise SystemExit(f"Invalid case study value(s): {', '.join(invalid)}")
+
+print(" ".join(values))
+PY
+}
+
 run_cluster() {
   local input="${BENCHMARK_INPUT:-/healthcare/pilot/input/huatuo_unified.jsonl}"
+  local cases
+  cases="$(case_studies)"
 
   if [[ "$framework_filter" == "all" || "$framework_filter" == "hadoop" ]]; then
-    for case_study in 1 2 3 4; do
+    for case_study in $cases; do
       local hadoop_output="${BENCHMARK_HADOOP_OUTPUT_PREFIX:-/healthcare/pilot/output/hadoop-cs}${case_study}-${timestamp}"
       echo "Running Hadoop Streaming YARN case study ${case_study}..."
       local start
@@ -47,7 +69,7 @@ run_cluster() {
   fi
 
   if [[ "$framework_filter" == "all" || "$framework_filter" == "spark" ]]; then
-    for case_study in 1 2 3 4; do
+    for case_study in $cases; do
       local spark_output="${BENCHMARK_SPARK_OUTPUT_PREFIX:-/healthcare/pilot/output/spark-cs}${case_study}-${timestamp}"
       echo "Running Spark YARN case study ${case_study}..."
       hdfs dfs -rm -r -f "$spark_output" >/dev/null 2>&1 || true
@@ -70,7 +92,7 @@ case "$mode" in
     run_cluster
     ;;
   *)
-    echo "Usage: $0 cluster [all|hadoop|spark]" >&2
+    echo "Usage: $0 cluster [all|hadoop|spark] [case_numbers_csv]" >&2
     exit 2
     ;;
 esac

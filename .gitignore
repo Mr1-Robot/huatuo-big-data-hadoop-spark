@@ -4,6 +4,7 @@ __pycache__/
 ~$*
 .venv/
 .hf-cache/
+.matplotlib-cache/
 docs/
 
 # Full Huatuo sources and generated standardized data can be several GB.
@@ -20,6 +21,7 @@ results/*
 !results/case-benchmark/
 results/case-benchmark/*
 !results/case-benchmark/timings-cluster-20260606-153149.csv
+!results/case-benchmark/timings-full-cluster-20260607-171724.csv
 spark-warehouse/
 metastore_db/
 derby.log

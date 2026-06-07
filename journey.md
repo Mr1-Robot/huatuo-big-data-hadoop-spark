@@ -1,28 +1,21 @@
-# Huatuo Big Data Project Journey
+# Huatuo Big Data Processing Project
 
-## 1. Project Goal
+This repository implements a large-scale healthcare analytics pipeline for the
+Huatuo medical QA datasets. It standardizes four heterogeneous Huatuo sources
+into one canonical JSONL dataset, then runs equivalent analytical workloads with
+Hadoop Streaming and Apache Spark on HDFS/YARN.
 
-This project is an Alternative Assessment for the WOC7017 Big Data Processing
-course.
+The project was built for WOC7017 Big Data Processing and is designed to show:
 
-The assessment requires:
+- Big-data preprocessing on a dataset larger than 2 GB.
+- Schema normalization and union of heterogeneous medical QA sources.
+- Four MapReduce-style healthcare analytics case studies.
+- Equivalent Hadoop Streaming and PySpark implementations.
+- HDFS/YARN benchmark results comparing Hadoop and Spark.
 
-- A healthcare problem that requires big-data processing.
-- A dataset larger than 2 GB.
-- Several MapReduce algorithms or case studies.
-- Equivalent implementations using Hadoop and Apache Spark.
-- Processing-time comparison between Hadoop and Spark.
-- Discussion of the complete data analytics lifecycle.
+## Dataset
 
-Our selected project is:
-
-> Big Data Processing and Comparative Analytics for Large-Scale Medical
-> Knowledge Discovery in the Huatuo-26M Dataset
-
-## 2. Verified Dataset Sources
-
-We downloaded the original published Hugging Face repository files without
-converting or rewriting them.
+The project uses four Huatuo source repositories:
 
 | Source             | Main fields                                                      |        Records |         Size |
 | ------------------ | ---------------------------------------------------------------- | -------------: | -----------: |
@@ -32,7 +25,7 @@ converting or rewriting them.
 | Huatuo26M-Lite     | `id`, `question`, `answer`, `score`, `label`, `related_diseases` |        177,703 |     0.138 GB |
 | **Combined**       | Heterogeneous medical QA records                                 | **34,048,913** | **5.432 GB** |
 
-The combined original source size is:
+The combined original source snapshot is:
 
 ```text
 5,431,518,498 bytes
@@ -40,141 +33,21 @@ The combined original source size is:
 5.058 GiB
 ```
 
-This satisfies the assessment requirement for a dataset larger than 2 GB.
+The source files are JSONL. No Pandas conversion is required for the production
+pipeline because Python, Hadoop Streaming, and Spark can read JSONL directly.
 
-## 3. Important Dataset Findings
+## Data Integration Method
 
-### Consultation QA
-
-The consultation source contains patient questions, but its answers are mainly
-URLs rather than answer text.
-
-```json
-{
-  "questions": ["Patient question"],
-  "answers": ["https://example-medical-site/question/123"]
-}
-```
-
-### Encyclopedia and Knowledge Graph QA
-
-These sources contain questions and textual answers:
-
-```json
-{
-  "questions": ["Medical question"],
-  "answers": ["Medical answer text"]
-}
-```
-
-Some fields contain nested lists, so they must be normalized before analysis.
-
-### Huatuo26M-Lite
-
-Lite contains the richest metadata:
-
-```json
-{
-  "id": 22647835,
-  "question": "Medical question",
-  "answer": "Medical answer",
-  "score": 5,
-  "label": "眼耳鼻喉科",
-  "related_diseases": "鼻中隔偏曲"
-}
-```
-
-## 4. Selected Case Studies
-
-The selected case studies use available dataset fields and transparently
-distinguish observed metadata from inferred metadata.
-
-### Case Study 1: Medical Department Demand
-
-Count observed department labels from Lite. Optional inferred department results
-must be reported separately.
-
-Techniques:
-
-- Filtering
-- Grouping
-- Counting
-- Sorting
-- Top-N retrieval
-
-### Case Study 2: Disease and Symptom Trend Mining
-
-Count disease and symptom mentions across medical questions and textual answers.
-
-Techniques:
-
-- WordCount
-- Pattern matching
-- Grouping
-- Counting
-- Sorting
-
-### Case Study 3: Medical QA Quality and Completeness
-
-Compare source-level quality characteristics such as:
-
-- Missing answers
-- URL-only answers
-- Duplicate questions
-- Average question and answer lengths
-- Lite quality scores
-
-Techniques:
-
-- Partitioning
-- Filtering
-- Average calculation
-- Min/max retrieval
-- Percentage calculation
-
-### Case Study 4: Question-Type and Framework Performance
-
-Classify medical questions into types such as symptoms, causes, diagnosis,
-treatment, medication, and prevention. Run the same task in Hadoop and Spark to
-compare processing time.
-
-Techniques:
-
-- Pattern matching
-- Classification
-- Grouping
-- Counting
-- Processing-time calculation
-
-## 5. Data Integration Decision
-
-The four datasets must be **unioned**, not joined.
+The Huatuo sources are integrated by **schema normalization and union**, not by
+joining records.
 
 A join would imply that records from different sources describe the same
-consultation or patient. No reliable shared identifier exists to support that
-claim.
+patient, consultation, or medical event. The datasets do not provide a reliable
+shared patient ID, consultation ID, or universal question ID. To avoid creating
+false relationships, each record is preserved as a separate medical QA
+observation.
 
-The unification is therefore based on shared semantic structure rather than
-shared IDs. All selected sources contain medical question-answer records, so
-their available fields can be mapped into one canonical QA schema. The original
-source identity is preserved in the `source` and `source_split` fields.
-
-This avoids creating false relationships between records. For example, a
-consultation record and an encyclopedia record may both discuss the same disease,
-but that does not prove they describe the same patient, question, or medical
-event. A union keeps them as separate observations in one integrated analytical
-dataset.
-
-Presentation justification:
-
-> The Huatuo sources were unified by schema normalization and union. We did not
-> join records because there is no trustworthy shared key across all sources.
-> Instead, each medical QA record was converted into the same canonical schema,
-> source provenance was preserved, unavailable metadata was represented as null,
-> and duplicate questions were flagged transparently using a normalized question
-> hash.
-
-The planned integration flow is:
+The integration logic is:
 
 ```text
 Original Huatuo source JSONL files
@@ -195,9 +68,13 @@ Upload standardized data to HDFS
 Run equivalent Hadoop and Spark analytics
 ```
 
-## 6. Canonical Schema
+Source provenance is retained in `source` and `source_split`. Missing metadata
+is represented as `null`, and duplicate questions are flagged using a normalized
+question hash.
 
-Every source record will eventually become a record with the same structure:
+## Canonical Schema
+
+Every source record is mapped into this common structure:
 
 ```json
 {
@@ -218,156 +95,147 @@ Every source record will eventually become a record with the same structure:
 }
 ```
 
-Observed and inferred metadata must never be mixed silently.
-
-Question text normalization means formatting cleanup only. The project does not
-translate, rewrite, medically correct, or change the meaning of questions.
+Question normalization is formatting cleanup only. It does not translate,
+rewrite, medically correct, or change question meaning.
 
 The normalization step:
 
 - Converts missing values to an empty string.
 - Joins list-valued questions into one string.
 - Converts dictionary-valued questions into JSON text.
-- Converts the final value to a string.
 - Replaces repeated whitespace with one space.
 - Removes leading and trailing spaces.
 
 For duplicate detection, the normalized question is casefolded and hashed with
-SHA-256. This means questions that only differ by spacing or capitalization can
-be flagged as duplicates, while the original normalized question text remains
-available for analysis.
+SHA-256. This flags questions that differ only by spacing or capitalization.
 
-Example:
+## Project Structure
 
 ```text
-"  What   causes fever?  "
-```
-
-becomes:
-
-```text
-What causes fever?
-```
-
-## 7. Source Download Strategy
-
-Hugging Face snapshot downloads preserve the original published repository
-files:
-
-```text
-data/source/consultation/
-data/source/encyclopedia/
-data/source/knowledge_graph/
-data/source/lite/
-```
-
-These folders now contain the original published repository files.
-
-The original files are already JSONL, so no Pandas conversion is required.
-Pandas, Hadoop, Spark, and normal Python can all read JSONL.
-
-## 8. Storage Size Explanation
-
-The original Huatuo source snapshot is **5.432 GB**, but the processed working
-directory becomes much larger during full-data preparation.
-
-This is expected because the raw files only contain the fields published by each
-source. The canonical JSONL adds project-specific metadata to every record,
-including provenance, quality, length, hash, and duplicate fields:
-
-- `source`
-- `source_split`
-- `answer_type`
-- `metadata_origin`
-- `question_length`
-- `answer_length`
-- `question_hash`
-- `duplicate_flag`
-
-JSONL is also plain text, so every field name is repeated on every row. With
-more than 34 million records, the repeated keys and added metadata increase the
-final canonical file size.
-
-During preprocessing, the project temporarily stores both standardized
-per-source intermediate files and the final unified canonical file. Therefore,
-the working directory size is not the same as the final dataset size.
-
-```text
-Raw source data:             about 5.4 GB
-Final canonical data:        20,168,846,076 bytes, about 19 GB
-Working directory:           about 41 GB before cleanup, 19 GB after cleanup
-```
-
-After inspection, validation, and HDFS upload, the intermediate files in
-`data/standardized-full/sources/` and the temporary dedupe SQLite database were
-removed to recover disk space. The important local full-data artifact is:
-
-```text
-data/standardized-full/huatuo_unified.jsonl
-```
-
-Presentation explanation:
-
-> The raw source data is 5.432 GB. The processed canonical dataset is larger
-> because every row carries extra provenance, quality, length, hash, and
-> duplicate fields. The working folder is larger again because it temporarily
-> stores both intermediate standardized files and the final unified output.
-
-## 9. Current Project Structure
-
-```text
-config/          Shared rules used by Hadoop and Spark
-data/samples/    Tiny example datasets
-data/source/     Original downloaded Huatuo repository files
-docs/            Local assessment PDFs, ignored by Git
+config/          Shared case-study rules used by Hadoop and Spark
+data/samples/    Small sample records for inspection
 hadoop/          Hadoop Streaming mapper and reducer
-preprocessing/   Download, standardize, union, and validate scripts
-scripts/         Terminal commands for inspection and execution
+preprocessing/   Download, standardize, union, and validation code
+reports/         Source integrity and analytics summary evidence
+scripts/         Reproducible terminal commands
 spark/           Equivalent PySpark analytics implementation
-reports/         Source-integrity and pilot-result evidence
-README.md        Short operational guide
-journey.md       This project journey
+README.md        Short operational entry point
+journey.md       Detailed project guide
 ```
 
-## 10. Source Integrity Manifest
+The following directories are intentionally ignored by Git because they contain
+large local data, private reference documents, or generated outputs:
 
-Before transformation, every original JSONL file is counted and hashed with
-SHA-256:
+```text
+.venv/
+data/source/
+data/pilot/
+data/processed-pilot/
+data/standardized-full/
+docs/
+results/
+```
+
+## Case Studies
+
+### 1. Medical Department Demand
+
+Counts observed department labels from Huatuo26M-Lite.
+
+MapReduce behavior:
+
+- Map: emit department keys with value `1`.
+- Reduce: sum counts for each department.
+- Output: department demand distribution.
+
+### 2. Disease and Symptom Trend Mining
+
+Counts disease and symptom mentions in medical questions and textual answers.
+
+MapReduce behavior:
+
+- Map: search text for configured disease and symptom terms, then emit term keys.
+- Reduce: sum counts for each disease or symptom term.
+- Output: disease and symptom frequency table.
+
+### 3. Medical QA Quality and Completeness
+
+Compares source-level completeness and quality characteristics.
+
+Metrics include:
+
+- Empty questions.
+- Empty answers.
+- URL-only answers.
+- Duplicate questions.
+- Average question and answer lengths.
+- Huatuo26M-Lite score statistics.
+
+MapReduce behavior:
+
+- Map: emit one source-level quality record per input row.
+- Reduce: aggregate counts, averages, percentages, min score, and max score.
+- Output: one quality summary per source.
+
+### 4. Question-Type Distribution
+
+Classifies medical questions into configured categories such as treatment,
+diagnosis, symptoms, medication, prevention, cause, or other.
+
+MapReduce behavior:
+
+- Map: classify each question and emit the category with value `1`.
+- Reduce: sum counts for each question type.
+- Output: question-type distribution.
+
+## Environment
+
+Create and activate the local Python environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+For an existing environment, only activate it:
+
+```bash
+source .venv/bin/activate
+```
+
+## Source Data Inspection
+
+Inspect downloaded source sizes, record counts, and samples:
+
+```bash
+bash scripts/inspect_source_data.sh summary
+bash scripts/inspect_source_data.sh samples
+```
+
+Create the source integrity manifest:
 
 ```bash
 bash scripts/create_source_manifest.sh
 ```
 
-The generated files are:
+Generated evidence:
 
 ```text
 reports/source_manifest.csv
 reports/source_manifest.json
 ```
 
-The manifest records:
+The manifest records each original JSONL file path, byte size, record count, and
+SHA-256 checksum.
 
-- Original file path
-- Byte size
-- JSON record count
-- SHA-256 checksum
+## Pilot Pipeline
 
-This makes the data pipeline reproducible and provides evidence that the source
-files remain unchanged. The ten JSONL source files contain **34,048,913
-non-empty JSON records** and **5,431,492,086 bytes**. Repository metadata files
-such as README and loader scripts account for the small difference from the
-complete snapshot size.
+The pilot is a deterministic 400,000-record real-data subset used to validate
+the pipeline before running the full dataset.
 
-## 11. Pilot Sampling Method
-
-Processing all 34 million records before validating the pipeline would make
-development slow and error-prone. A deterministic pilot was therefore created:
-
-```bash
-bash scripts/create_pilot.sh
-```
-
-The pilot contains exactly 100,000 real records from each source:
+It contains 100,000 records from each source:
 
 | Source          | Validation |      Test |   Train/Full |       Total |
 | --------------- | ---------: | --------: | -----------: | ----------: |
@@ -377,22 +245,20 @@ The pilot contains exactly 100,000 real records from each source:
 | Lite            |        N/A |       N/A | 100,000 full |     100,000 |
 | **Combined**    |  **3,000** | **3,000** |  **394,000** | **400,000** |
 
-The pilot uses a deterministic prefix from each source after preserving all
-available validation and test records. This makes runs reproducible. It is used
-for engineering validation, not for making final population-level conclusions.
-
-Every pilot record receives a `source_split` field so its origin remains
-traceable after integration.
-
-## 12. Pilot Preprocessing Results
-
-The pilot was standardized and unioned with:
+Create and process the pilot:
 
 ```bash
+bash scripts/create_pilot.sh
 bash scripts/prepare_data.sh data/pilot data/processed-pilot
 ```
 
-Verified results:
+Pilot output:
+
+```text
+data/processed-pilot/huatuo_unified.jsonl
+```
+
+Pilot preprocessing result:
 
 | Metric                       |  Result |
 | ---------------------------- | ------: |
@@ -406,92 +272,53 @@ Verified results:
 | Duplicate percentage         | 0.1772% |
 | Validation status            |   Valid |
 
-The processed pilot occupies approximately 929 MB because the canonical format
-adds provenance, derived lengths, hashes, and metadata fields to every record.
+## Full Dataset Pipeline
 
-## 13. Pilot Analytics Results
-
-All four case studies completed successfully on the 400,000-record pilot.
-Hadoop and Spark produced the same output row counts for every case study, which
-confirms that the two implementations are analytically equivalent before the
-benchmark comparison.
-
-| Case study                  | Output groups |
-| --------------------------- | ------------: |
-| Department demand           |            16 |
-| Disease and symptom trends  |         2,301 |
-| QA quality and completeness |             4 |
-| Question-type distribution  |             7 |
-
-The Hadoop-versus-Spark timing comparison is reported in Section 15 using
-HDFS/YARN benchmark submissions.
-
-### Pilot Analytical Observations
-
-- The 100,000 consultation records contain URL answers, producing a 100% URL
-  answer rate for that source.
-- The Lite source has an average quality score of **4.12922**, with observed
-  scores between 4 and 5.
-- Lite questions are the longest on average at **80.15646 characters**.
-- Encyclopedia answers are the longest on average at **538.86676 characters**.
-- The largest recognized question category is treatment with **68,116**
-  questions.
-- The second-largest recognized category is diagnosis with **50,621**
-  questions.
-- The department with the highest observed Lite pilot count is `妇产科`
-  with **19,406** records.
-
-Reproducible summary evidence is stored in:
-
-```text
-reports/pilot_summary.json
-reports/framework_equivalence.json
-results/case-benchmark/timings-cluster-20260606-153149.csv
-```
-
-## 14. Inspecting the Original Data
-
-Use the inspection script:
+Prepare the complete canonical dataset:
 
 ```bash
-bash scripts/inspect_source_data.sh summary
-bash scripts/inspect_source_data.sh samples
+bash scripts/prepare_full_data.sh data/source data/standardized-full
 ```
 
-The summary command displays source sizes and counts all records with a terminal
-spinner.
+Full canonical output:
 
-## 15. Inspecting the Full Canonical Data
+```text
+data/standardized-full/huatuo_unified.jsonl
+```
 
-After the full source files are standardized and unioned, the next step is local
-inspection only. Hadoop and Spark should not be submitted until the full
-canonical data has been checked.
+The full preprocessing command performs:
 
-The inspection command is:
+- Schema normalization for every source split.
+- Text normalization for question and answer fields.
+- Union into one canonical JSONL file.
+- Cross-source duplicate flagging using normalized `question_hash`.
+- Validation of the final canonical file.
+
+Observed preprocessing runtime:
+
+```text
+Full preprocessing runtime: approximately 2 hours 23 minutes
+Measured window: 2026-06-06 16:17:30 to about 18:40 +08
+Union output write phase: 2 hours 20 minutes 26 seconds
+```
+
+The runtime was measured from observed output-file timestamps and command
+completion polling. For a formal rerun, wrap the command with `/usr/bin/time`.
+
+## Full Dataset Inspection
+
+Inspect the complete canonical dataset before submitting Hadoop or Spark jobs:
 
 ```bash
 bash scripts/summarize_full_data.sh
 ```
 
-It reports local file properties:
-
-```bash
-ls -lh data/standardized-full/huatuo_unified.jsonl
-du -h data/standardized-full/huatuo_unified.jsonl
-wc -l data/standardized-full/huatuo_unified.jsonl
-```
-
-It also creates:
+This creates:
 
 ```text
 reports/full_summary.json
 data/samples/full-canonical/
 ```
-
-These files provide full-data evidence similar to the pilot evidence: total
-records, source distribution, answer-type distribution, duplicate percentage,
-missing values, length statistics, quality-score statistics, and representative
-samples by source.
 
 Full canonical inspection result:
 
@@ -516,76 +343,47 @@ Source distribution:
 | Knowledge Graph QA | 798,444 |
 | Huatuo26M-Lite | 177,703 |
 
-Full-data evidence is stored in:
+## Storage Notes
+
+The raw source snapshot is about 5.4 GB, while the canonical dataset is about
+19 GB. This is expected because the canonical JSONL adds provenance, quality,
+length, hash, and duplicate metadata to every row. JSONL also repeats field
+names on every record.
+
+During preprocessing, the working directory temporarily reached about 41 GB
+because it contained both intermediate standardized files and the final unified
+file. After validation and HDFS upload, temporary intermediate files were
+removed. The final local full-data artifact is:
 
 ```text
-reports/full_summary.json
-data/samples/full-canonical/
+data/standardized-full/huatuo_unified.jsonl
 ```
 
-## 16. Full Preprocessing Runtime
+## HDFS Staging
 
-The full-source preprocessing command is:
+Start Hadoop services:
 
 ```bash
-bash scripts/prepare_full_data.sh data/source data/standardized-full
+start-dfs.sh
+start-yarn.sh
 ```
 
-This command performs:
+If ResourceManager is not reachable after `start-yarn.sh`, run it in a separate
+terminal during benchmarking:
 
-- Schema normalization for every source split.
-- Text normalization for question and answer fields.
-- Union into one canonical JSONL file.
-- Cross-source duplicate flagging using normalized `question_hash` values.
-- Validation of the final canonical file.
-
-Observed execution time:
-
-```text
-Full preprocessing runtime: approximately 2 hours 23 minutes
-Measured window: 2026-06-06 16:17:30 to about 18:40 +08
-Union output write phase: 2 hours 20 minutes 26 seconds
+```bash
+yarn resourcemanager
 ```
 
-The command was started before a timer wrapper was added, so the runtime is
-reported from observed output-file timestamps and command completion polling.
-Future formal runs should wrap the command with `/usr/bin/time`.
+Upload the pilot input:
 
-## 17. Current Status
+```bash
+bash scripts/upload_to_hdfs.sh \
+  data/processed-pilot/huatuo_unified.jsonl \
+  /healthcare/pilot/input
+```
 
-Completed:
-
-- Read and analyzed the assessment requirements.
-- Defined four case studies aligned with the available dataset fields.
-- Downloaded all four original Huatuo dataset repositories.
-- Confirmed the combined dataset exceeds 5 GB.
-- Confirmed the combined record count is over 34 million.
-- Generated a SHA-256 integrity manifest for every source JSONL file.
-- Created a deterministic 400,000-record real-data pilot.
-- Implemented the canonical preprocessing pipeline.
-- Implemented Hadoop Streaming and PySpark analytics.
-- Validated all four case studies against the real-data pilot.
-- Confirmed matching Hadoop/Spark pilot aggregate outputs.
-- Added simple source-data inspection commands.
-- Added a per-case-study benchmark mode for Hadoop and Spark.
-- Executed the controlled per-case-study benchmark on HDFS/YARN.
-- Completed full-source schema normalization, union, and duplicate flagging.
-- Validated the complete canonical dataset.
-- Inspected and summarized the complete canonical dataset.
-- Added full-canonical-data inspection and sample-generation scripts.
-- Uploaded the complete canonical dataset to HDFS.
-- Removed temporary full-preprocessing intermediates after HDFS staging.
-
-Not yet completed:
-
-- Run all four full-dataset Hadoop jobs.
-- Run all four full-dataset Spark jobs.
-- Produce final result tables, diagrams, and report discussion.
-
-## 18. Full Dataset HDFS Staging
-
-After local inspection passed, the complete canonical dataset was uploaded to
-HDFS:
+Upload the full input:
 
 ```bash
 bash scripts/upload_to_hdfs.sh \
@@ -593,74 +391,101 @@ bash scripts/upload_to_hdfs.sh \
   /healthcare/full/input
 ```
 
-The HDFS input for full-dataset experiments is:
+Verify the full HDFS input:
 
-```text
-/healthcare/full/input/huatuo_unified.jsonl
+```bash
+hdfs dfs -ls -h /healthcare/full/input/huatuo_unified.jsonl
 ```
 
-HDFS verification:
+Verified full HDFS input from this project run:
 
 ```text
 -rw-r--r--   1 muammar.jsx supergroup  18.8 G  2026-06-06 20:54  /healthcare/full/input/huatuo_unified.jsonl
 ```
 
-The pilot and full datasets are stored separately in HDFS:
+## Benchmark Commands
 
-```text
-/healthcare/pilot/input/huatuo_unified.jsonl
-/healthcare/full/input/huatuo_unified.jsonl
-```
-
-## 19. Benchmark Design
-
-The benchmark measures each analytical question separately. It submits one job
-per case study for Hadoop and one job per case study for Spark:
+Run the pilot HDFS/YARN benchmark:
 
 ```bash
 bash scripts/run_case_benchmark.sh cluster
 ```
 
-The output CSV has one row per framework per case study:
-
-```text
-framework,mode,case_study,elapsed_seconds,output_records,input,output
-```
-
-This layout is useful for the presentation because it shows which case study is
-more expensive. For example, disease and symptom trend extraction is expected
-to be heavier than department demand because it searches more medical terms and
-creates more output groups.
-
-The benchmark controls the main comparison points:
-
-- Hadoop and Spark read the same canonical JSONL input.
-- Hadoop and Spark execute equivalent analytical logic.
-- Each case study is timed separately.
-- Each output record count is logged for validation.
-- The HDFS/YARN mode is used for the formal cluster comparison.
-
-The pilot benchmark command is:
-
-```bash
-bash scripts/run_case_benchmark.sh cluster
-```
-
-The full-dataset benchmark command is:
+Run the full HDFS/YARN benchmark:
 
 ```bash
 bash scripts/run_full_case_benchmark.sh
 ```
 
-The full benchmark wrapper sets:
+Run only one framework:
 
-```text
-BENCHMARK_INPUT=/healthcare/full/input/huatuo_unified.jsonl
-BENCHMARK_HADOOP_OUTPUT_PREFIX=/healthcare/full/output/hadoop-cs
-BENCHMARK_SPARK_OUTPUT_PREFIX=/healthcare/full/output/spark-cs
+```bash
+bash scripts/run_full_case_benchmark.sh hadoop
+bash scripts/run_full_case_benchmark.sh spark
 ```
 
-Formal HDFS/YARN benchmark on the 400,000-record pilot:
+Run selected case studies:
+
+```bash
+bash scripts/run_full_case_benchmark.sh hadoop 3,4
+bash scripts/run_full_case_benchmark.sh spark 1,2,3,4
+```
+
+The benchmark output CSV format is:
+
+```text
+framework,mode,case_study,elapsed_seconds,output_records,input,output
+```
+
+Regenerate the full benchmark chart:
+
+```bash
+MPLCONFIGDIR=.matplotlib-cache \
+  .venv/bin/python scripts/generate_benchmark_chart.py
+```
+
+## Benchmark Results
+
+Full HDFS/YARN benchmark on the 34,048,898-record canonical dataset:
+
+![Full Huatuo HDFS/YARN benchmark chart](reports/full_benchmark_chart.png)
+
+| Case study                  | Output groups | Hadoop Streaming on YARN | Spark on YARN |
+| --------------------------- | ------------: | -----------------------: | ------------: |
+| Department demand           |            16 |                128.071 s |     117.327 s |
+| Disease and symptom trends  |         2,711 |                139.457 s |     149.503 s |
+| QA quality and completeness |             4 |                273.549 s |      82.296 s |
+| Question-type distribution  |             7 |                204.027 s |     113.497 s |
+
+Timing file:
+
+```text
+results/case-benchmark/timings-full-cluster-20260607-171724.csv
+```
+
+Local output copies:
+
+```text
+results/full-benchmark/outputs/hadoop-cs1.jsonl
+results/full-benchmark/outputs/hadoop-cs2.jsonl
+results/full-benchmark/outputs/hadoop-cs3.jsonl
+results/full-benchmark/outputs/hadoop-cs4.jsonl
+results/full-benchmark/outputs/spark-cs1.jsonl
+results/full-benchmark/outputs/spark-cs2.jsonl
+results/full-benchmark/outputs/spark-cs3.jsonl
+results/full-benchmark/outputs/spark-cs4.jsonl
+```
+
+Output row counts match between Hadoop and Spark for every case study:
+
+| Case study | Hadoop rows | Spark rows |
+| ---------- | ----------: | ---------: |
+| 1          |          16 |         16 |
+| 2          |       2,711 |      2,711 |
+| 3          |           4 |          4 |
+| 4          |           7 |          7 |
+
+Pilot HDFS/YARN benchmark on the 400,000-record dataset:
 
 | Case study                  | Output groups | Hadoop Streaming on YARN | Spark on YARN |
 | --------------------------- | ------------: | -----------------------: | ------------: |
@@ -669,66 +494,37 @@ Formal HDFS/YARN benchmark on the 400,000-record pilot:
 | QA quality and completeness |             4 |                 19.602 s |      25.309 s |
 | Question-type distribution  |             7 |                 18.560 s |      23.310 s |
 
-The timing file is:
+Pilot timing file:
 
 ```text
 results/case-benchmark/timings-cluster-20260606-153149.csv
 ```
 
-This table is the benchmark used for the Hadoop-versus-Spark comparison. Both
-frameworks read the same HDFS input file and write their outputs back to HDFS.
-The output-group counts match across frameworks, which confirms that the jobs
-produced equivalent aggregate result sizes.
+## Implementation Notes
 
-## 20. Next Step
+The Hadoop reducer uses streaming aggregation. This matters for full-scale data:
+case study 3 can produce millions of intermediate quality records for a single
+source, so the reducer must aggregate values as they arrive instead of storing
+all values in memory.
 
-The complete canonical dataset has been created and inspected from all original
-source files:
+Both implementations use shared analytical rules from `config/` so that Hadoop
+and Spark classify departments, disease/symptom terms, and question types
+consistently.
 
-```text
-consultation/{train,validation,test}_datasets.jsonl
-encyclopedia/{train,validation,test}_datasets.jsonl
-knowledge_graph/{train,validation,test}_datasets.jsonl
-lite/format_data.jsonl
-```
+## Evidence Files
 
-The complete canonical dataset has been uploaded to HDFS, and the full benchmark
-wrapper has been prepared. The next implementation step is to run the formal
-full-dataset Hadoop and Spark experiments.
-
-The full-source pipeline preserves every source split:
-
-```bash
-bash scripts/prepare_full_data.sh data/source data/standardized-full
-```
-
-This command produces the complete canonical dataset at:
+Key reproducibility and evidence files:
 
 ```text
-data/standardized-full/huatuo_unified.jsonl
+reports/source_manifest.csv
+reports/source_manifest.json
+reports/pilot_summary.json
+reports/framework_equivalence.json
+reports/full_summary.json
+reports/full_benchmark_chart.png
+results/case-benchmark/timings-cluster-20260606-153149.csv
+results/case-benchmark/timings-full-cluster-20260607-171724.csv
 ```
 
-The full canonical file has been inspected with:
-
-```bash
-bash scripts/summarize_full_data.sh
-```
-
-The formal full-dataset benchmark will be launched with:
-
-```bash
-bash scripts/run_full_case_benchmark.sh
-```
-
-## 21. Suggested Presentation Storyline
-
-1. Explain the WOC7017 assessment goal and healthcare domain.
-2. Introduce the four Huatuo sources and prove the combined 5.432 GB size.
-3. Show how heterogeneous schemas create a data-integration challenge.
-4. Explain why the records are standardized and unioned.
-5. Present the canonical schema and source-integrity manifest.
-6. Explain the deterministic 400,000-record pilot methodology.
-7. Present the four MapReduce case studies.
-8. Show the pilot validation and analytical observations.
-9. Present the per-case-study Hadoop-versus-Spark benchmark.
-10. Demonstrate the complete HDFS Hadoop-versus-Spark evaluation.
+Large generated datasets and benchmark outputs are ignored by Git. They can be
+recreated with the scripts documented above.

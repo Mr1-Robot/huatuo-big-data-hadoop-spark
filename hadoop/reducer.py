@@ -6,42 +6,55 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, Iterator
+from typing import Any
 
 
-def grouped_input() -> Iterator[tuple[str, list[Any]]]:
-    current_key = None
-    values: list[Any] = []
-    for line in sys.stdin:
-        if not line.strip():
-            continue
-        key, raw_value = line.rstrip("\n").split("\t", 1)
-        if current_key is not None and key != current_key:
-            yield current_key, values
-            values = []
-        current_key = key
-        values.append(json.loads(raw_value))
-    if current_key is not None:
-        yield current_key, values
+QUALITY_SUM_FIELDS = (
+    "records",
+    "empty_questions",
+    "empty_answers",
+    "url_answers",
+    "duplicates",
+    "question_length_sum",
+    "answer_length_sum",
+    "score_count",
+    "score_sum",
+)
 
 
-def reduce_quality(values: list[dict[str, Any]]) -> dict[str, Any]:
-    summed = {
-        name: sum(value[name] for value in values)
-        for name in (
-            "records",
-            "empty_questions",
-            "empty_answers",
-            "url_answers",
-            "duplicates",
-            "question_length_sum",
-            "answer_length_sum",
-            "score_count",
-            "score_sum",
-        )
+def is_quality_key(case_study: str, key: list[Any]) -> bool:
+    return case_study == "3" or (case_study == "all" and key[0] == "source_quality")
+
+
+def empty_quality_accumulator() -> dict[str, Any]:
+    return {
+        **{name: 0 for name in QUALITY_SUM_FIELDS},
+        "score_min": None,
+        "score_max": None,
     }
-    score_mins = [value["score_min"] for value in values if value["score_min"] is not None]
-    score_maxs = [value["score_max"] for value in values if value["score_max"] is not None]
+
+
+def add_quality(accumulator: dict[str, Any], value: dict[str, Any]) -> dict[str, Any]:
+    for name in QUALITY_SUM_FIELDS:
+        accumulator[name] += value[name]
+    score_min = value["score_min"]
+    score_max = value["score_max"]
+    if score_min is not None:
+        accumulator["score_min"] = (
+            score_min
+            if accumulator["score_min"] is None
+            else min(accumulator["score_min"], score_min)
+        )
+    if score_max is not None:
+        accumulator["score_max"] = (
+            score_max
+            if accumulator["score_max"] is None
+            else max(accumulator["score_max"], score_max)
+        )
+    return accumulator
+
+
+def reduce_quality(summed: dict[str, Any]) -> dict[str, Any]:
     records = summed["records"]
     score_count = summed["score_count"]
     return {
@@ -51,9 +64,19 @@ def reduce_quality(values: list[dict[str, Any]]) -> dict[str, Any]:
         "duplicate_percentage": 100 * summed["duplicates"] / records,
         "url_answer_percentage": 100 * summed["url_answers"] / records,
         "score_average": summed["score_sum"] / score_count if score_count else None,
-        "score_min": min(score_mins) if score_mins else None,
-        "score_max": max(score_maxs) if score_maxs else None,
+        "score_min": summed["score_min"],
+        "score_max": summed["score_max"],
     }
+
+
+def print_result(key: list[Any], result: dict[str, Any]) -> None:
+    print(
+        json.dumps(
+            {"key": key, "metrics": result},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+    )
 
 
 def main() -> int:
@@ -66,21 +89,49 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    for raw_key, values in grouped_input():
-        key = json.loads(raw_key)
-        result = (
-            reduce_quality(values)
-            if args.case_study == "3"
-            or (args.case_study == "all" and key[0] == "source_quality")
-            else {"count": sum(values)}
-        )
-        print(
-            json.dumps(
-                {"key": key, "metrics": result},
-                ensure_ascii=False,
-                sort_keys=True,
+    current_raw_key: str | None = None
+    current_key: list[Any] | None = None
+    accumulator: Any = None
+
+    for line in sys.stdin:
+        if not line.strip():
+            continue
+        raw_key, raw_value = line.rstrip("\n").split("\t", 1)
+        if current_raw_key is not None and raw_key != current_raw_key:
+            if current_key is None:
+                raise ValueError("Reducer reached an empty grouped key")
+            result = (
+                reduce_quality(accumulator)
+                if is_quality_key(args.case_study, current_key)
+                else {"count": accumulator}
             )
+            print_result(current_key, result)
+            accumulator = None
+
+        if raw_key != current_raw_key:
+            current_raw_key = raw_key
+            current_key = json.loads(raw_key)
+            accumulator = (
+                empty_quality_accumulator()
+                if is_quality_key(args.case_study, current_key)
+                else 0
+            )
+
+        value = json.loads(raw_value)
+        if current_key is None:
+            raise ValueError("Reducer received value without a key")
+        if is_quality_key(args.case_study, current_key):
+            accumulator = add_quality(accumulator, value)
+        else:
+            accumulator += value
+
+    if current_key is not None:
+        result = (
+            reduce_quality(accumulator)
+            if is_quality_key(args.case_study, current_key)
+            else {"count": accumulator}
         )
+        print_result(current_key, result)
     return 0
 
 
