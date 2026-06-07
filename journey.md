@@ -640,6 +640,26 @@ The benchmark controls the main comparison points:
 - Each output record count is logged for validation.
 - The HDFS/YARN mode is used for the formal cluster comparison.
 
+The pilot benchmark command is:
+
+```bash
+bash scripts/run_case_benchmark.sh cluster
+```
+
+The full-dataset benchmark command is:
+
+```bash
+bash scripts/run_full_case_benchmark.sh
+```
+
+The full benchmark wrapper sets:
+
+```text
+BENCHMARK_INPUT=/healthcare/full/input/huatuo_unified.jsonl
+BENCHMARK_HADOOP_OUTPUT_PREFIX=/healthcare/full/output/hadoop-cs
+BENCHMARK_SPARK_OUTPUT_PREFIX=/healthcare/full/output/spark-cs
+```
+
 Formal HDFS/YARN benchmark on the 400,000-record pilot:
 
 | Case study                  | Output groups | Hadoop Streaming on YARN | Spark on YARN |
@@ -672,9 +692,9 @@ knowledge_graph/{train,validation,test}_datasets.jsonl
 lite/format_data.jsonl
 ```
 
-The complete canonical dataset has been uploaded to HDFS. The next
-implementation step is to run the formal full-dataset Hadoop and Spark
-experiments.
+The complete canonical dataset has been uploaded to HDFS, and the full benchmark
+wrapper has been prepared. The next implementation step is to run the formal
+full-dataset Hadoop and Spark experiments.
 
 The full-source pipeline preserves every source split:
 
@@ -692,6 +712,12 @@ The full canonical file has been inspected with:
 
 ```bash
 bash scripts/summarize_full_data.sh
+```
+
+The formal full-dataset benchmark will be launched with:
+
+```bash
+bash scripts/run_full_case_benchmark.sh
 ```
 
 ## 21. Suggested Presentation Storyline
