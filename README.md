@@ -150,3 +150,23 @@ results/case-benchmark/timings-full-cluster-20260607-171724.csv
 
 See [journey.md](journey.md) for the detailed methodology, canonical schema,
 case-study definitions, full inspection results, and benchmark discussion.
+
+## Presentation
+
+A 20-minute PowerPoint deck is available at:
+
+```text
+presentations/huatuo_big_data_processing_20min.pptx
+```
+
+Speaker pacing notes are available at:
+
+```text
+presentations/huatuo_big_data_processing_20min_notes.md
+```
+
+Regenerate the deck:
+
+```bash
+.venv/bin/python scripts/build_presentation.py
+```

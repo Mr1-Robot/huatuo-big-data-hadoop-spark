@@ -322,26 +322,26 @@ data/samples/full-canonical/
 
 Full canonical inspection result:
 
-| Metric | Value |
-| ------ | ----: |
-| Final canonical records | 34,048,898 |
+| Metric                    |                             Value |
+| ------------------------- | --------------------------------: |
+| Final canonical records   |                        34,048,898 |
 | Final canonical file size | 20,168,846,076 bytes, about 19 GB |
-| Invalid JSON lines | 0 |
-| Duplicate-flagged records | 10,162,575 |
-| Duplicate percentage | 29.847% |
-| URL answers | 32,708,326 |
-| Text answers | 1,340,572 |
-| Missing questions | 0 |
-| Missing answers | 0 |
+| Invalid JSON lines        |                                 0 |
+| Duplicate-flagged records |                        10,162,575 |
+| Duplicate percentage      |                           29.847% |
+| URL answers               |                        32,708,326 |
+| Text answers              |                         1,340,572 |
+| Missing questions         |                                 0 |
+| Missing answers           |                                 0 |
 
 Source distribution:
 
-| Source | Records |
-| ------ | ------: |
-| Consultation QA | 32,708,331 |
-| Encyclopedia QA | 364,420 |
-| Knowledge Graph QA | 798,444 |
-| Huatuo26M-Lite | 177,703 |
+| Source             |    Records |
+| ------------------ | ---------: |
+| Consultation QA    | 32,708,331 |
+| Encyclopedia QA    |    364,420 |
+| Knowledge Graph QA |    798,444 |
+| Huatuo26M-Lite     |    177,703 |
 
 ## Storage Notes
 
@@ -415,6 +415,30 @@ Run the full HDFS/YARN benchmark:
 
 ```bash
 bash scripts/run_full_case_benchmark.sh
+```
+
+We can limit it like this:
+
+```bash
+bash scripts/run_full_case_benchmark.sh hadoop
+bash scripts/run_full_case_benchmark.sh spark
+bash scripts/run_full_case_benchmark.sh hadoop 3,4
+```
+
+Results:
+
+```bash
+ls -lh results/full-benchmark/outputs
+```
+
+Print outputs:
+
+```bash
+head results/full-benchmark/outputs/hadoop-cs1.jsonl
+head results/full-benchmark/outputs/spark-cs1.jsonl
+.
+.
+.
 ```
 
 Run only one framework:
