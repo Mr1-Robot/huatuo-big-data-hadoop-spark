@@ -293,6 +293,10 @@ The full preprocessing command performs:
 - Union into one canonical JSONL file.
 - Cross-source duplicate flagging using normalized `question_hash`.
 - Validation of the final canonical file.
+- We used union instead of join because the datasets do not have a trustworthy shared key such as patient ID,
+  consultation ID, or universal question ID. Joining would create false relationships between records.Since all
+  sources are medical question-answer records, we normalized them into one canonical schema and unioned them as
+  separate observations while preserving source provenance.
 
 Observed preprocessing runtime:
 
@@ -319,6 +323,29 @@ This creates:
 reports/full_summary.json
 data/samples/full-canonical/
 ```
+
+Samples can also be extracted directly from the 19GB unified JSONL file while
+preserving the canonical schema:
+
+```bash
+.venv/bin/python scripts/extract_full_unified_samples.py
+```
+
+Canonical sample output:
+
+```text
+reports/full_unified_samples.jsonl
+```
+
+Print the extracted unified samples in the terminal:
+
+```bash
+head -n 5 reports/full_unified_samples.jsonl
+```
+
+The JSONL sample file contains actual records after mapping into the project
+schema, including `record_id`, `source`, `question`, `answer`, `answer_type`,
+metadata fields, lengths, `question_hash`, and `duplicate_flag`.
 
 Full canonical inspection result:
 
@@ -545,6 +572,7 @@ reports/source_manifest.json
 reports/pilot_summary.json
 reports/framework_equivalence.json
 reports/full_summary.json
+reports/full_unified_samples.jsonl
 reports/full_benchmark_chart.png
 results/case-benchmark/timings-cluster-20260606-153149.csv
 results/case-benchmark/timings-full-cluster-20260607-171724.csv

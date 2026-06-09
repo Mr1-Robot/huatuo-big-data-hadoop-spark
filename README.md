@@ -82,6 +82,12 @@ Inspect the complete canonical dataset:
 bash scripts/summarize_full_data.sh
 ```
 
+Extract full unified samples as JSONL:
+
+```bash
+.venv/bin/python scripts/extract_full_unified_samples.py
+```
+
 ## HDFS/YARN Execution
 
 Start Hadoop services:
