@@ -7,8 +7,12 @@ case_filter="${3:-1,2,3,4}"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 results_dir="results/case-benchmark"
 timings_file="${BENCHMARK_TIMINGS_FILE:-$results_dir/timings-${mode}-${timestamp}.csv}"
+local_outputs_dir="${BENCHMARK_LOCAL_OUTPUTS_DIR:-}"
 
 mkdir -p "$results_dir"
+if [[ -n "$local_outputs_dir" ]]; then
+  mkdir -p "$local_outputs_dir"
+fi
 if [[ ! -f "$timings_file" ]]; then
   printf 'framework,mode,case_study,elapsed_seconds,output_records,input,output\n' > "$timings_file"
 fi
@@ -25,6 +29,18 @@ PY
 
 hdfs_count() {
   hdfs dfs -cat "$1" | wc -l | tr -d ' '
+}
+
+save_hdfs_output_jsonl() {
+  local hdfs_glob="$1"
+  local local_path="$2"
+
+  if [[ -z "$local_path" ]]; then
+    return 0
+  fi
+
+  echo "Saving HDFS output to local file: $local_path"
+  hdfs dfs -cat "$hdfs_glob" > "$local_path"
 }
 
 case_studies() {
@@ -65,6 +81,7 @@ run_cluster() {
       local records
       records="$(hdfs_count "${hadoop_output}/part-*")"
       echo "hadoop_streaming_yarn,$mode,$case_study,$elapsed,$records,$input,$hadoop_output" >> "$timings_file"
+      save_hdfs_output_jsonl "${hadoop_output}/part-*" "${local_outputs_dir:+$local_outputs_dir/hadoop-cs${case_study}.jsonl}"
     done
   fi
 
@@ -83,6 +100,7 @@ run_cluster() {
       local records
       records="$(hdfs_count "${spark_output}/part-*.json")"
       echo "spark_submit_yarn,$mode,$case_study,$elapsed,$records,$input,$spark_output" >> "$timings_file"
+      save_hdfs_output_jsonl "${spark_output}/part-*.json" "${local_outputs_dir:+$local_outputs_dir/spark-cs${case_study}.jsonl}"
     done
   fi
 }
