@@ -1,20 +1,7 @@
-{"key": ["question_type", "cause"],
- "metrics": {"count": 1526071}}	
-
-{"key": ["question_type", "diagnosis"],
- "metrics": {"count": 1000666}}	
-
-{"key": ["question_type", "medication"],
- "metrics": {"count": 2275619}}	
-
-{"key": ["question_type", "other"],
- "metrics": {"count": 24580705}}	
-
-{"key": ["question_type", "prevention"],
- "metrics": {"count": 119195}}	
-
-{"key": ["question_type", "symptom"],
- "metrics": {"count": 735580}}	
-
-{"key": ["question_type", "treatment"],
- "metrics": {"count": 3811062}}	
+{"key": ["question_type", "cause"], "metrics": {"count": 1526071}}
+{"key": ["question_type", "diagnosis"], "metrics": {"count": 1000666}}
+{"key": ["question_type", "medication"], "metrics": {"count": 2275619}}
+{"key": ["question_type", "other"], "metrics": {"count": 24580705}}
+{"key": ["question_type", "prevention"], "metrics": {"count": 119195}}
+{"key": ["question_type", "symptom"], "metrics": {"count": 735580}}
+{"key": ["question_type", "treatment"], "metrics": {"count": 3811062}}

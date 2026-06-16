@@ -22,16 +22,19 @@ runs equivalent Hadoop/Spark analytics on YARN.
 ```text
 config/          Shared analytical rules
 data/samples/    Small tracked sample records
+final-report/    Generated report tables and figures used in the paper
 hadoop/          Hadoop Streaming mapper and reducer
 preprocessing/   Download, standardization, union, validation, summaries
 reports/         Integrity summaries, full-data summaries, benchmark chart
+results/         Selected benchmark timings and compact JSONL outputs
 scripts/         Reproducible commands for data prep and execution
 spark/           Equivalent PySpark analytics implementation
 journey.md       Detailed project guide and benchmark evidence
 ```
 
 Large source data, generated canonical datasets, local documents, virtual
-environments, and job outputs are ignored by Git.
+environments, Hadoop CRC files, and presentation binaries are ignored by Git.
+Small benchmark evidence files under `results/` are tracked.
 
 ## Setup
 
@@ -150,6 +153,14 @@ reports/pilot_summary.json
 reports/framework_equivalence.json
 reports/full_summary.json
 reports/full_benchmark_chart.png
+results/full-benchmark/outputs/hadoop-cs1.jsonl
+results/full-benchmark/outputs/hadoop-cs2.jsonl
+results/full-benchmark/outputs/hadoop-cs3.jsonl
+results/full-benchmark/outputs/hadoop-cs4.jsonl
+results/full-benchmark/outputs/spark-cs1.jsonl
+results/full-benchmark/outputs/spark-cs2.jsonl
+results/full-benchmark/outputs/spark-cs3.jsonl
+results/full-benchmark/outputs/spark-cs4.jsonl
 results/case-benchmark/timings-cluster-20260606-153149.csv
 results/case-benchmark/timings-full-cluster-20260607-171724.csv
 ```
@@ -159,20 +170,15 @@ case-study definitions, full inspection results, and benchmark discussion.
 
 ## Presentation
 
-A 20-minute PowerPoint deck is available at:
-
-```text
-presentations/huatuo_big_data_processing_20min.pptx
-```
-
-Speaker pacing notes are available at:
-
-```text
-presentations/huatuo_big_data_processing_20min_notes.md
-```
-
-Regenerate the deck:
+Presentation binaries are local deliverables and are ignored by Git to keep the
+code submission compact. Regenerate the deck locally with:
 
 ```bash
 .venv/bin/python scripts/build_presentation.py
+```
+
+The generated deck path is:
+
+```text
+presentations/huatuo_big_data_processing_20min.pptx
 ```

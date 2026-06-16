@@ -1,2 +1,0 @@
-framework,mode,case_study,elapsed_seconds,output_records,input,output
-hadoop_streaming_yarn,cluster,2,197.981,2711,/healthcare/full/input/huatuo_unified.jsonl,/healthcare/full/output/hadoop-cs2-20260609-183231
