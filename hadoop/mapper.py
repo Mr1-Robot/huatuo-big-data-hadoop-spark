@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, os.getcwd())
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "preprocessing"))
+# pyrefly: ignore [missing-import]
 from common import load_json, match_terms  # noqa: E402
 
 
