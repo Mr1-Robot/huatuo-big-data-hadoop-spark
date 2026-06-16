@@ -144,9 +144,14 @@ MPLCONFIGDIR=.matplotlib-cache \
 
 ## Evidence
 
+Final report:
+
+[Huatuo Medical QA Processing Report](final-report/huatuo_medical_qa_report.pdf)
+
 Key tracked evidence files:
 
 ```text
+final-report/huatuo_medical_qa_report.pdf
 reports/source_manifest.csv
 reports/source_manifest.json
 reports/pilot_summary.json
