@@ -22,9 +22,9 @@ runs equivalent Hadoop/Spark analytics on YARN.
 ```text
 config/          Shared analytical rules
 data/samples/    Small tracked sample records
-final-report/    Generated report tables and figures used in the paper
 hadoop/          Hadoop Streaming mapper and reducer
 preprocessing/   Download, standardization, union, validation, summaries
+report/          Final report PDF, LaTeX source, figures, and report assets
 reports/         Integrity summaries, full-data summaries, benchmark chart
 results/         Selected benchmark timings and compact JSONL outputs
 scripts/         Reproducible commands for data prep and execution
@@ -146,12 +146,14 @@ MPLCONFIGDIR=.matplotlib-cache \
 
 Final report:
 
-[Huatuo Medical QA Processing Report](final-report/huatuo_medical_qa_report.pdf)
+[Huatuo Medical QA Processing Report](report/huatuo_medical_qa_report.pdf)
 
 Key tracked evidence files:
 
 ```text
-final-report/huatuo_medical_qa_report.pdf
+report/huatuo_medical_qa_report.pdf
+report/huatuo_medical_qa_report.tex
+report/references.bib
 reports/source_manifest.csv
 reports/source_manifest.json
 reports/pilot_summary.json

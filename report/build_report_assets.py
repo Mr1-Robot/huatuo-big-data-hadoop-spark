@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORT_DIR = ROOT / "final-report"
+REPORT_DIR = ROOT / "report"
 FIGURES_DIR = REPORT_DIR / "figures"
 TABLES_DIR = REPORT_DIR / "tables"
 
